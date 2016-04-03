@@ -36,7 +36,6 @@ t251' = twoFiveOne (C, 4) wn
 -- Test: twoFiveOne (C, 4) wn = t251
 
 -- ===== Exercise 2.2 =====
---
 -- Part 1
 data BluesPitchClass = Ro -- Root
                      | MT -- Minor Third
@@ -77,7 +76,34 @@ bluesMelody       = fromBlues $ bluesMelody_part1 :=: bluesMelody_part2
 -- play bluesMelody
 
 -- ===== Exercise 2.3 =====
+-- scale = [C, Cs, D, Ds, E, F, Fs, G, Gs, A, As, B]
+-- notesPerScale = length scale
+-- abspitch (pitch ap) = abspitch $ (scale !! (ap `mod` notesPerScale), ap `div` 12)
+--     = 12 * (ap `div` 12) + pcToInt (ap `mod` notesPerScale)
+--     = ap
+
+-- pitch (abspitch (pc, oct))
+--     = pitch(12 * oct + pcToInt pc)
+--     = (scale !! (pcToInt pc), ap `div` 12)
+--     = (pc, (12 * oct) `div` 12)
+--     = (pc, oct)
 
 -- ===== Exercise 2.4 =====
+-- trans i (trans j p)
+--     = trans i (pitch (absPitch p + j))
+--     = trans i (scale !! ((absPitch (p + j) `mod` notesPerScale)), (absPitch (p + j) `div` 12))
+--     = ...
+-- Some arithmetic is omitted, but the motivation is that trans is a linear translation,
+-- so the effect of composed operations is additive.
 
 -- ===== Exercise 2.5 =====
+transM :: AbsPitch -> Music Pitch -> Music Pitch
+transM t (Prim (Note d p))          = Prim (Note d (pitch ((absPitch p) + t)))
+transM t (Prim (Rest d))            = Prim (Rest d)
+transM t (m1 :+: m2)                = (transM t m1) :+: (transM t m2)
+transM t (m1 :=: m2)                = (transM t m1) :=: (transM t m2)
+transM t (Modify (Transpose t') m') = transM (t + t') m'
+transM t (Modify mod m')            = Modify mod (transM t m')
+
+applyTranspose :: Music Pitch -> Music Pitch
+applyTranspose mus = transM (0::AbsPitch) mus
