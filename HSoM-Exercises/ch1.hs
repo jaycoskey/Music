@@ -5,7 +5,6 @@ import Euterpea.Music
 import HSoM
 
 -- ===== Exercise 1.1 =====
---
 -- simple (simple 2 3 4) 5 6
 --     = simple (2 * (3 + 4)) 5 6  -- unfold inner function definition
 --     = simple (2 * 7) 5 6
@@ -15,14 +14,12 @@ import HSoM
 --     = 154
 
 -- ===== Exercise 1.2 =====
---
 -- simple (a - b) a b
 --     = (a - b) * (a + b)
 --     = a^2 + a * b - a * b - b^2
 --     = a^2 - b^2
 
 -- ===== Exercise 1.3 =====
---
 -- [A, B, C] :: [PitchClass]
 -- [D, 42]   -- Not well-typed: PitchClass and numeric literal have incompatible types.
 -- (-42, Ef) -- Not well-typed, for previous reason.
@@ -33,7 +30,6 @@ import HSoM
 -- ["I", "love", "Euterpea"] :: [String] or [[Char]]
 
 -- ===== Exercise 1.4 =====
---
 hNote :: Dur -> Pitch -> Music Pitch
 hNote d p = note d p :=: note d (trans (-3) p)
 
@@ -69,4 +65,3 @@ melListTrans = hListTrans qn [p1, p2, p3] (-3)
 
 testListTrans = mel :+: wnr :+: melTrans :+: wnr :+: melList :+: wnr :+: melListTrans
 -- play testListTrans
-
