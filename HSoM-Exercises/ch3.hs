@@ -1,4 +1,4 @@
--- Haskell School of Music, Chapter 2
+-- Haskell School of Music, Chapter 3
 
 import Euterpea
 import Euterpea.Music
