@@ -109,24 +109,37 @@ itm_bass_32a = cqns [d 3, c 4] :+: cqns [ef 3, df 4]
 itm_treb_32b = d 5 qn :+: (bf 4 en :+: a 4 (en + en) :+: g 4 en) :+: qnr
 itm_bass_32b = cqns [d 3, c 4] :+: (cens [ef 3, df 4] :+: cqns [d 3, c 4] :+: cens [g 3, b 3]) :+: qnr
 
-itm_1_4   = itm_treb_1_4 :=: itm_bass_1_4
-itm_5_15  = (itm_treb_5_8   :=: itm_bass_5_8)
-            :+: (itm_treb_9_12  :=: itm_bass_9_12)
-            :+: (itm_treb_13_15 :=: itm_bass_13_15)
-itm_16a   = itm_treb_16a :=: itm_bass_16a
-itm_16b   = itm_treb_16b :=: itm_bass_16b
-itm_17_31 = (itm_treb_17_20 :=: itm_bass_17_20)
-            :+: (itm_treb_21_24 :=: itm_bass_21_24)
-            :+: (itm_treb_25_28 :=: itm_bass_25_28)
-            :+: (itm_treb_29_31 :=: itm_bass_29_31)
-itm_32a   = itm_treb_32a :=: itm_bass_32a
-itm_32b   = itm_treb_32b :=: itm_bass_32b
+instr_treb = instrument AcousticGrandPiano  -- Trumpet
+instr_bass = instrument AcousticGrandPiano  -- Trombone
 
-itm = Modify (Tempo (180/120))
-        $ Modify (KeySig G Major)
+zipStaves :: [Music a] -> [Music a] -> Music a
+zipStaves trebs basses =
+    line $ zipWith (:=:)
+                   (map instr_treb trebs)
+                   (map instr_bass basses)
+
+itm_1_4 = zipStaves [itm_treb_1_4] [itm_bass_1_4]
+itm_5_15 = zipStaves
+               [itm_treb_5_8, itm_treb_9_12, itm_treb_13_15]
+               [itm_bass_5_8, itm_bass_9_12, itm_bass_13_15]
+
+itm_16a   = zipStaves [itm_treb_16a] [itm_bass_16a]
+itm_16b   = zipStaves [itm_treb_16b] [itm_bass_16b]
+
+itm_17_31 = zipStaves
+                [itm_treb_17_20, itm_treb_21_24, itm_treb_25_28, itm_treb_29_31]
+                [itm_bass_17_20, itm_bass_21_24, itm_bass_25_28, itm_bass_29_31]
+
+itm_32a   = zipStaves [itm_treb_32a] [itm_bass_32a]
+itm_32b   = zipStaves [itm_treb_32b] [itm_bass_32b]
+
+itm = Modify (Tempo (90/60)) $ Modify (KeySig G Major)
         $ itm_1_4
           :+: repeatWithEnd2 itm_5_15  itm_16a itm_16b
           :+: repeatWithEnd2 itm_17_31 itm_32a itm_32b
+
+itm_short = Modify (Tempo (180/120)) $ Modify (KeySig G Major)
+        $ itm_1_4 :+: itm_5_15 :+: itm_16b :+: itm_17_31 :+: itm_32b
 
 -- ===== Exercise 4.2 =====
 prefixes :: [a] -> [[a]]
@@ -144,8 +157,8 @@ prefix mels = m :+: transpose 5 m :+: m
 
 mel1 = [c 5 en, e 5 sn, g 5 en, b 5 sn, a 5 en, f 5 sn, d 5 en, b 4 sn, c 5 en]
 mel2 = [c 5 sn, e 5 sn, g 5 sn, b 5 sn, a 5 sn, f 5 sn, d 5 sn, b 4 sn, c 5 sn]
-closeEncounters = [g 3 qn, a 3 qn, f 3 qn, f 2 qn, c 3 qn]
-closeEncounters' = [g 4 qn, a 4 qn, f 4 qn, f 3 qn, c 4 qn]
+closeEncounters  = [g 3 qn, a 3 qn, f 3 qn, f 2 qn, c 3 qn]
+closeEncounters' = map (transpose 12) closeEncounters
 
 -- play $ line mel1
 -- play $ line mel2
