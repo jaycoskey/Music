@@ -25,16 +25,11 @@ myPasHandler (Dyn (Crescendo x)) performance = boostVolsBy x
           propTime t = (t - t0) / perfDur
           propVolDelta :: PTime -> Rational
           propVolDelta t = x * (propTime t)
-          inRange mn mx x = min mx $ max mn x
+          -- inRange mn mx x = min mx $ max mn x
+          newVol t v = round((1 + (propVolDelta t)) * (fromIntegral v))
           boostMEventVol (e@MEvent {eTime = t, eVol = v})
-              = e { eVol = inRange 127 127  -- TODO: Revert to 0 127 after bug fixed
-                                   (trace ( -- TODO: No output to the console window
-                                            "Vol="
-                                            ++ show (round((1 + (propVolDelta t)) * (fromIntegral v)))
-                                            ++ "\n"
-                                          )
-                                          (round((1 + (propVolDelta t)) * (fromIntegral v)))
-                                    )
+              = e { eVol = trace ("Vol=" ++ show (newVol t v))
+                                 (newVol t v)
                   }
           boostVolsBy :: Rational -> [MEvent]
           boostVolsBy x = map boostMEventVol performance
@@ -53,23 +48,25 @@ myPlayer = MkPlayer { pName        = "CustCresc"
                     , interpPhrase = myInterpPhrase myPasHandler
                     --, notatePlayer = ()
                     }
-myPMap :: PlayerName ->  Player Note1
+myPMap :: PlayerName -> Player Note1
 myPMap "CustCresc" = myPlayer
-myPMap p           = defPMap p
+myPMap p           = error "Use CustCresc player for testing"
+
+myCon = defCon { cPlayer = myPlayer }
 
 -- custCresc :: Music a -> Music a
-custCresc mus = Modify (Phrase [Dyn (Crescendo (4/1))]) mus
--- aps           = [30, 70]
+custCresc mus = Modify (Phrase [Dyn (Crescendo (3/1))]) mus
+-- aps           = [20, 80]
 -- gamut_dur     = wn
-aps           = [30 .. 70]
-gamut_dur     = sfn
+aps           = replicate 32 60
+gamut_dur     = sn
 gamut         = addVolume 31 $ line $ map ap2Note aps
                   where ap2Note = \ap -> Prim $ Note gamut_dur $ pitch ap
 gamut_cresc   = custCresc gamut
 test_8_1      = gamut :+: gamut_cresc
 
--- Test: play test_8_1
--- Test: playA myPMap defCon test_8_1
+-- Test: play               test_8_1
+-- Test: playA myPMap myCon test_8_1
 
 -- ===== Exercise 8.2 =====
 -- Choose some of the other phrase attributes and provide interpretations for them.
@@ -93,5 +90,4 @@ test_8_1      = gamut :+: gamut_cresc
 -- scale degrees to do the transposition.
 --   diatonicTrans (C, Major) (c 4 en :+: d 4 en :+: e 4 en) => e 4 en :+: f 4 en  :+: g 4 en
 --   diatonicTrans (G, Major) (c 4 en :+: d 4 en :+: e 4 en) => e 4 en :+: fs 4 en :+: g 4 en
--- Hint: You will need to use cKey to access the key from the context .
-
+-- Hint: You will need to use cKey to access the key from the context.
