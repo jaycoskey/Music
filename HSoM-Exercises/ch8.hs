@@ -17,10 +17,10 @@ import HSoM
 
 myPasHandler :: PhraseAttribute -> Performance -> Performance
 -- See Figure 8.6
-myPasHandler (Dyn (Crescendo x)) perf = boostVolsBy x
-    where t0 = eTime (head perf)
+myPasHandler (Dyn (Crescendo x)) performance = boostVolsBy x
+    where t0 = eTime (head performance)
           perfDur :: Dur
-          perfDur =  sum $ map eDur perf
+          perfDur =  sum $ map eDur performance
           propTime :: PTime -> Rational
           propTime t = (t - t0) / perfDur
           propVolDelta :: PTime -> Rational
@@ -37,37 +37,39 @@ myPasHandler (Dyn (Crescendo x)) perf = boostVolsBy x
                                     )
                   }
           boostVolsBy :: Rational -> [MEvent]
-          boostVolsBy x = map boostMEventVol perf
+          boostVolsBy x = map boostMEventVol performance
 myPasHandler pa                    pf = defPasHandler pa pf
 
+type PasHandler = PhraseAttribute -> Performance -> Performance
+-- type PhraseFun = (PMap a -> Context a -> [PhraseAttribute])
+-- perf :: PMap a -> Context a -> Music a -> (Performance, DurT)
+myInterpPhrase :: (PhraseAttribute -> Performance -> Performance) -- PasHandler
+                  -> (PMap a -> Context a -> [PhraseAttribute] -> Music a -> (Performance, DurT))
+myInterpPhrase pasHandler pm context pas m = (foldr pasHandler pf pas, durPerf)
+    where (pf, durPerf) = perf pm context m
+
 myPlayer = MkPlayer { pName        = "CustCresc"
-                    , playNote     = defPlayNote defNasHandler
-                    , interpPhrase = defInterpPhrase defPasHandler
+                    , playNote     = defPlayNote    defNasHandler
+                    , interpPhrase = myInterpPhrase myPasHandler
                     --, notatePlayer = ()
                     }
 myPMap :: PlayerName ->  Player Note1
 myPMap "CustCresc" = myPlayer
 myPMap p           = defPMap p
 
-custCresc :: Music a -> Music a
-custCresc mus = Modify (Phrase [Dyn (Crescendo (5/4))]) mus
-aps           = [30, 70]
-gamut_dur     = wn
--- aps        = [30 .. 70]
--- gamut_du   = sfn
-gamut         = addVolume 127 $ line $ map ap2Note aps
+-- custCresc :: Music a -> Music a
+custCresc mus = Modify (Phrase [Dyn (Crescendo (4/1))]) mus
+-- aps           = [30, 70]
+-- gamut_dur     = wn
+aps           = [30 .. 70]
+gamut_dur     = sfn
+gamut         = addVolume 31 $ line $ map ap2Note aps
                   where ap2Note = \ap -> Prim $ Note gamut_dur $ pitch ap
 gamut_cresc   = custCresc gamut
 test_8_1      = gamut :+: gamut_cresc
 
--- playA myPMap defCon test_8_1
-
--- TODO: Fix a bug so that the following expression plays two sequences (gamut & gamut_cresc),
---       with the second being louder than the first.
---       Currently, all notes of gamut are audible,
---       but only some the notes of gamut_cresc are audible,
---       with the exact # being audible depending on the Crescendo value.
---       The Crescendo value of 10,000 seems to have a special significance.
+-- Test: play test_8_1
+-- Test: playA myPMap defCon test_8_1
 
 -- ===== Exercise 8.2 =====
 -- Choose some of the other phrase attributes and provide interpretations for them.
