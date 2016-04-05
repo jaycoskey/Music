@@ -1,9 +1,13 @@
 -- Haskell School of Music, Chapter 8
 
+import System.IO.Unsafe
+import Debug.Trace
+
 import Euterpea
 import Euterpea.Music
 
 import HSoM
+
 -- ===== Exercise 8.1 =====
 -- Note to self: playA defPMap defCon <music_a>
 
@@ -12,9 +16,29 @@ import HSoM
 --     map (\e -> e {eVol = round (x * fromIntegral (eVol e))})
 
 myPasHandler :: PhraseAttribute -> Performance -> Performance
-myPasHandler (Dyn (Crescendo x)) pf = map boostVolume pf
-    where boostVolume = \e -> e { eVol = eVol e {- round((1+x) * fromIntegral(eVol e)) -} }
-myPasHandler pa                  pf = defPasHandler pa pf
+-- See Figure 8.6
+myPasHandler (Dyn (Crescendo x)) perf = boostVolsBy x
+    where t0 = eTime (head perf)
+          perfDur :: Dur
+          perfDur =  sum $ map eDur perf
+          propTime :: PTime -> Rational
+          propTime t = (t - t0) / perfDur
+          propVolDelta :: PTime -> Rational
+          propVolDelta t = x * (propTime t)
+          inRange mn mx x = min mx $ max mn x
+          boostMEventVol (e@MEvent {eTime = t, eVol = v})
+              = e { eVol = inRange 127 127  -- TODO: Revert to 0 127 after bug fixed
+                                   (trace ( -- TODO: No output to the console window
+                                            "Vol="
+                                            ++ show (round((1 + (propVolDelta t)) * (fromIntegral v)))
+                                            ++ "\n"
+                                          )
+                                          (round((1 + (propVolDelta t)) * (fromIntegral v)))
+                                    )
+                  }
+          boostVolsBy :: Rational -> [MEvent]
+          boostVolsBy x = map boostMEventVol perf
+myPasHandler pa                    pf = defPasHandler pa pf
 
 myPlayer = MkPlayer { pName        = "CustCresc"
                     , playNote     = defPlayNote defNasHandler
@@ -26,20 +50,29 @@ myPMap "CustCresc" = myPlayer
 myPMap p           = defPMap p
 
 custCresc :: Music a -> Music a
-custCresc mus = Modify (Phrase [Dyn (Crescendo (1/1))]) mus
-gamut = line $ map (\ap -> Prim $ Note en $ pitch ap) [30, 35 .. 70]
-gamut_cresc = custCresc gamut
-test_8_1  = gamut :+: gamut_cresc
+custCresc mus = Modify (Phrase [Dyn (Crescendo (5/4))]) mus
+aps           = [30, 70]
+gamut_dur     = wn
+-- aps        = [30 .. 70]
+-- gamut_du   = sfn
+gamut         = addVolume 127 $ line $ map ap2Note aps
+                  where ap2Note = \ap -> Prim $ Note gamut_dur $ pitch ap
+gamut_cresc   = custCresc gamut
+test_8_1      = gamut :+: gamut_cresc
 
--- TODO: Fix a bug so that the following expression plays two sequences,
---       with the second being louder than the first.
---       Currently, only the first note of gamut_cresc is audible,
---       even when the volume level (eVol) remains unchanged and the Crescendo value is 1/1.
 -- playA myPMap defCon test_8_1
+
+-- TODO: Fix a bug so that the following expression plays two sequences (gamut & gamut_cresc),
+--       with the second being louder than the first.
+--       Currently, all notes of gamut are audible,
+--       but only some the notes of gamut_cresc are audible,
+--       with the exact # being audible depending on the Crescendo value.
+--       The Crescendo value of 10,000 seems to have a special significance.
 
 -- ===== Exercise 8.2 =====
 -- Choose some of the other phrase attributes and provide interpretations for them.
 -- Note: You might need to access the cKey field.
+-- TODO: Ritardando
 
 -- ===== Exercise 8.3 =====
 -- Define a play myPlayer that appropriately handles the Pedal articulation
