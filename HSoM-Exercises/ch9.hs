@@ -1,5 +1,4 @@
 -- Haskell School of Music, Chapter 9
-{-# LANGUAGE TypeSynonymInstances #-}  -- For RealFrac AbsPitch
 import Euterpea
 import Euterpea.Music
 
