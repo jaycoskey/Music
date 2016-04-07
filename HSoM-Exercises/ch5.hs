@@ -68,6 +68,8 @@ music_5_4 = notePairMusic [30, 32 .. 60] [15, 18 .. 61]
 
 -- ===== Exercise 5.5 =====
 -- Is there a way to use currying to eliminate the duration argument in the definition of hList?
+-- TODO: Factor out duration argument from hList_d.
+
 hNote :: Dur -> Pitch -> Music Pitch
 hNote d p = note d p :=: note d (trans (-3) p)
 
@@ -82,18 +84,22 @@ hList_b (p : ps) d = (:+:) (hNoteFlip p d) (hList_b ps d)
   where hNoteFlip = flip hNote
 
 -- Duration argument appears only once on right-hand side.
--- TODO: Factor out duration argument from hList_c.
 hList_c :: [Pitch] -> Dur -> Music Pitch
-hList_c []       _ = rest 0
-hList_c (p : ps) d = foldr1 (:+:) $ (flip map) [hNoteFlip p, hList_c ps] ($ d)
+hList_c []       = const $ rest 0
+hList_c (p : ps) = \d -> foldr1 (:+:) $ (flip map) [hNoteFlip p, hList_c ps] ($ d)
   where hNoteFlip = flip hNote
 
--- hList_d
+-- A non-recursive version (though line is implemented as a recursive function)
+hList_d :: [Pitch] -> Dur -> Music Pitch
+hList_d [] = \_ -> rest 0
+hList_d ps = \d -> line $ (flip map) (map hNoteFlip  ps) ($ d) 
+  where hNoteFlip :: Pitch -> Dur -> Music Pitch
+        hNoteFlip = flip hNote
 
 test_5_5_a = hList   qn [(C,4), (E,4), (G,4)]
 test_5_5_b = hList_b    [(C,4), (E,4), (G,4)] qn
 test_5_5_c = hList_c    [(C,4), (E,4), (G,4)] qn
--- test_5_5_d = hList_d    [(C,4), (E,4), (G,4)] qn
+test_5_5_d = hList_d    [(C,4), (E,4), (G,4)] qn
 
 -- ===== Exercise 5.6 =====
 -- Use line, map, and ($) to give a concise definition of addDur.
@@ -131,3 +137,4 @@ f1_5_10 = \fs x -> map ($ x) fs
 f2_5_10 = map
 testfunc_5_10_result = testfunc_5_10 f1_5_10 f2_5_10
 -- testfunc_5_10_result => [5, 10, 15, 20]
+
