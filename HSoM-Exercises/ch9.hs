@@ -7,6 +7,7 @@ import HSoM
 
 -- Inserting here code from this chapter.
 data Cluster  = Cluster SNote [Cluster]
+  
 type SNote    = (Dur,AbsPitch)
 
 selfSim :: [SNote] -> Cluster
@@ -163,7 +164,37 @@ tm2_9_4_b = ss_9_4 m2 6 50 (1/50)
 
 -- ===== Exercise 9.6 =====
 -- Add volume to SNote
--- TODO
+type VNote     = (Dur,AbsPitch,Volume)
+data VCluster  = VCluster VNote [VCluster]
+
+vSelfSim :: [VNote] -> VCluster
+vSelfSim pat = VCluster (0,0,0) (map mkVCluster pat)
+    where mkVCluster vNote =
+              VCluster vNote (map (mkVCluster . vNoteMix vNote) pat)
+
+vNoteMix :: VNote -> VNote -> VNote
+vNoteMix (d0,ap0,v0) (d1,ap1,v1) = ( d0 * d1
+                                   , ap0 + ap1
+                                   , 32 + ((v0 + v1) `mod` 64)  -- Non troppo piano, non troppo forte
+                                   )
+
+vFringe :: Int -> VCluster -> [VNote]
+vFringe 0 (VCluster vNote vCls) = [vNote]
+vFringe n (VCluster vNote vCls) = concatMap (vFringe (n-1)) vCls
+
+mkVNote :: (Dur, AbsPitch, Volume) -> Music (Pitch, Volume)
+mkVNote (d, ap, v) = addVolume v $ note d (pitch ap)
+
+vSimToMusic :: [VNote] -> Music (Pitch, Volume)
+vSimToMusic = line . map mkVNote
+
+vss :: [VNote] -> Int -> AbsPitch -> Dur -> Music (Pitch, Volume)
+vss pat n tr te = 
+   transpose tr $ tempo te $ vSimToMusic $ vFringe n $ vSelfSim pat
+
+vm2 :: [VNote]
+vm2 = [(dqn,0, 90), (qn,4, 100)]
+tvm2 = vss vm2 6 50 (1/50)
 
 -- ===== Exercise 9.7 =====
 -- Devise some other variant of self-similar music,
