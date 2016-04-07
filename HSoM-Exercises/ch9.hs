@@ -112,7 +112,6 @@ test_9_1 = chord [test_9_1_a, test_9_1_b, test_9_1_c]
 
 -- ===== Exercise 9.2 =====
 -- Define a version of fringe that is linear in the total length of the final list.
--- TODO
 
 -- fringe :: Int -> Cluster -> [SNote]
 -- fringe 0 (Cluster note cls) = [note]
@@ -269,11 +268,6 @@ tvm2 = vss vm2 6 50 (1/50)
 -- ===== Exercise 9.7 =====
 -- Devise some other variant of self-similar music,
 -- using structures different from those in selfSim.
--- TODO
-
--- ===== Exercise 9.8 =====
--- Define a function that gives the same result as ss,
--- but without using a data type such as Cluster.
 
 -- Idea (such as it is): Ascending and descending pitches with related endpoints.
 --   Consider the short melody
@@ -305,8 +299,13 @@ polyLineNotes n absNotes d = gamuts
     where ranges = zip (init absNotes) (tail absNotes)
           gamuts = map (\(begin, end) -> interNotes n begin end d) ranges
 
-test_9_8 = chord $ procrusteanize $ lines
+test_9_7 = chord $ procrusteanize $ lines
     where lines = map line $ polyLineNotes 10 [20, 30, 55, 40, 80, 55] en
+
+-- ===== Exercise 9.8 =====
+-- Define a function that gives the same result as ss,
+-- but without using a data type such as Cluster.
+-- TODO
 
 -- ===== Exercise 9.9 =====
 -- Entire melody level-to-level transformation
