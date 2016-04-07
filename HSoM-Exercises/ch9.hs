@@ -1,5 +1,5 @@
 -- Haskell School of Music, Chapter 9
-
+{-# LANGUAGE TypeSynonymInstances #-}  -- For RealFrac AbsPitch
 import Euterpea
 import Euterpea.Music
 
@@ -112,10 +112,17 @@ test_9_1 = chord [test_9_1_a, test_9_1_b, test_9_1_c]
 
 -- ===== Exercise 9.2 =====
 -- Define a version of fringe that is linear in the total length of the final list.
+-- TODO
 
 -- fringe :: Int -> Cluster -> [SNote]
 -- fringe 0 (Cluster note cls) = [note]
 -- fringe n (Cluster note cls) = concatMap (fringe (n-1)) cls
+
+-- TODO: Check to see if this is O(n).
+fringe_9_2 :: Int -> Cluster -> [SNote]
+fringe_9_2 0 (Cluster note cls) = [note]
+fringe_9_2 n (Cluster note cls) = concatl $ map (fringe (n-1)) cls
+  where concatl xss = foldl1 ((++)) xss
 
 -- ===== Exercise 9.3 =====
 d1 = [hn,   qn,  hn,  qn,  hn]
@@ -267,7 +274,39 @@ tvm2 = vss vm2 6 50 (1/50)
 -- ===== Exercise 9.8 =====
 -- Define a function that gives the same result as ss,
 -- but without using a data type such as Cluster.
--- TODO
+
+-- Idea (such as it is): Ascending and descending pitches with related endpoints.
+--   Consider the short melody
+--     ceg = line $ [c 4 qn, e 4 qn, g 4 qn]
+--   The absolute pitches of these notes is [60, 64, 67]
+--   which is the value of
+--     interpolateM 2 [60, 67]
+--   where
+--     interpolateM n x y = map ceiling [x, x + (y - x) / n) .. y]
+--   Similarly, interpolateM 10 [20, 80] => [20,26,32,38,44,50,56,62,68,74,80]
+
+-- interRationals :: Rational -> Rational -> Rational -> [Rational]
+-- Avoid infinite lists by ensuring that the second element is greater than the first.
+interAbsPitches :: Int -> AbsPitch -> AbsPitch -> [AbsPitch]
+interAbsPitches n x y = [x, elem2 .. y]
+    where step = ((y - x) `div` n)
+          elem2 = x + (min 1 step)
+
+interPitches :: Int -> AbsPitch -> AbsPitch -> [Pitch]
+interPitches n x y = map pitch $ interAbsPitches n x y
+
+interNotes:: Int -> AbsPitch -> AbsPitch -> Dur -> [Music Pitch]
+interNotes n x y d = map toNote pitches
+    where toNote  = \p -> note d p
+          pitches = interPitches n x y
+
+polyLineNotes :: Int -> [AbsPitch] -> Dur -> [[Music Pitch]]
+polyLineNotes n absNotes d = gamuts
+    where ranges = zip (init absNotes) (tail absNotes)
+          gamuts = map (\(begin, end) -> interNotes n begin end d) ranges
+
+test_9_8 = chord $ procrusteanize $ lines
+    where lines = map line $ polyLineNotes 10 [20, 30, 55, 40, 80, 55] en
 
 -- ===== Exercise 9.9 =====
 -- Entire melody level-to-level transformation
