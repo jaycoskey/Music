@@ -1,6 +1,9 @@
 -- Haskell School of Music, Chapter 8
 
-import System.IO.Unsafe
+-- import System.IO.Unsafe
+import Data.List
+import Data.Ratio
+
 import Debug.Trace
 
 import Euterpea
@@ -56,15 +59,14 @@ myCon = defCon { cPlayer = myPlayer }
 
 -- custCresc :: Music a -> Music a
 custCresc mus = Modify (Phrase [Dyn (Crescendo (3/1))]) mus
--- aps           = [20, 80]
--- gamut_dur     = wn
+
 aps           = replicate 32 60
-gamut_dur     = sn
-gamut         = line $ map ap2Note aps
-                  where ap2Note = \ap -> Prim $ Note gamut_dur $ pitch ap
-gamut_soft    = addVolume 31 $ gamut
-gamut_cresc   = custCresc gamut_soft
-test_8_1      = gamut_soft :+: gamut_cresc
+notes_dur     = sn
+notes         = line $ map ap2Note aps
+                  where ap2Note = \ap -> Prim $ Note notes_dur $ pitch ap
+notes_soft    = addVolume 31 $ notes
+notes_cresc   = custCresc notes_soft
+test_8_1      = notes_soft :+: notes_cresc
 
 -- Test: play               test_8_1
 -- Test: playA myPMap myCon test_8_1
@@ -79,7 +81,7 @@ test_8_1      = gamut_soft :+: gamut_cresc
 --                      | Art Articulation
 --                      | Orn Ornament
 
--- TODO: ===== Tempo -> Ritardando =====
+-- ===== Tempo -> Ritardando =====
 pasHandler_slow :: PhraseAttribute -> Performance -> Performance
 -- See Figure 8.6
 pasHandler_slow (Tmp (Ritardando x)) performance = changeTempoBy x
@@ -126,16 +128,66 @@ con_slow = defCon { cPlayer = player_slow }
 -- custCresc :: Music a -> Music a
 custSlow mus = Modify (Phrase [Tmp (Ritardando (5/1))]) mus
 
--- Defined in Ex 8.1: aps       = replicate 32 60
--- Defined in Ex 8.1: gamut_dur = sn
--- Defined in Ex 8.1: gamut     = addVolume 31 $ line $ map ap2Note aps
+-- Defined in Ex 8.1: notes
+notes_loud = notes
+notes_slow = custSlow notes_loud
+test_8_2_a = notes_loud :+: notes_slow
 
-gamut_loud = gamut
-gamut_slow = custSlow gamut_loud
-test_8_2 = gamut_loud :+: gamut_slow
+-- ===== Articulation -> Pizzicato =====
+-- TODO: Why is the first note in test_8_2_b2 silent when played Pizzicato?
+-- TODO: Why is the second note in the result of shortenNote silent,
+--         even without setting eVol = 0?
 
--- TODO: ===== Articulation -> Pizzicato =====
+pasHandler_pizz :: PhraseAttribute -> Performance -> Performance
+-- See Figure 8.6
+pasHandler_pizz (Art Pizzicato) performance = newPerformance
+    where -- Pizzicato changes an instrument's harmonics, but we ignore that here,
+          --   and only model the change in note duration.
+          -- Pizzicato changes notes in the phrase uniformly, so
+          --   there's no need to track time elapsed within the phrase.
+          shortenNote :: MEvent -> [MEvent]
+          shortenNote e@MEvent{eDur = d, eVol = v} =
+              [ e { eDur = trace ( "note dur=" ++ (show shortDur)
+                                   ++ "; rest dur=" ++ (show restDur)
+                                 )
+                                 shortDur
+                  , eVol = v
+                  }
+              , e { eDur = restDur }
+              ]
+              where shortDur = min sn d
+                    restDur  = d - shortDur
 
+          newPerformance = concat $ map shortenNote performance
+pasHandler_pizz pa                  pf = defPasHandler pa pf
+
+-- Defined in Ex 8.1: type PasHandler = PhraseAttribute -> Performance -> Performance
+-- type PhraseFun = (PMap a -> Context a -> [PhraseAttribute])
+-- perf :: PMap a -> Context a -> Music a -> (Performance, DurT)
+interpPhrase_pizz :: (PhraseAttribute -> Performance -> Performance) -- PasHandler
+                  -> (PMap a -> Context a -> [PhraseAttribute] -> Music a -> (Performance, DurT))
+interpPhrase_pizz pasHandler pm context pas m = (foldr pasHandler pf pas, durPerf)
+    where (pf, durPerf) = perf pm context m
+
+player_pizz = MkPlayer { pName        = "CustPizz"
+                       , playNote     = defPlayNote       defNasHandler
+                       , interpPhrase = interpPhrase_pizz pasHandler_pizz
+                       --, notatePlayer = ()
+                       }
+pMap_pizz :: PlayerName -> Player Note1
+pMap_pizz "CustPizz" = player_pizz
+pMap_pizz p          = error "Use CustPizz player for testing"
+
+con_pizz = defCon { cPlayer = player_pizz }
+
+-- custPizz :: Music a -> Music a
+custPizz mus = Modify (Phrase [Art Pizzicato]) mus
+
+test_8_2_b1 = instrument Violin $ line [c 4 hn, e 4 hn, g 4 hn, b 4 hn]
+test_8_2_b2 = custPizz test_8_2_b1
+
+-- Test: play                     test_8_2_b1
+-- Test: playA pMap_pizz con_pizz test_8_2_b2
 
 -- ===== Exercise 8.3 =====
 -- Define a play myPlayer that appropriately handles the Pedal articulation
