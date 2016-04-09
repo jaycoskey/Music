@@ -66,6 +66,9 @@ import HSoM
 --     substring problem".
 --
 -- (5) Modify Euterpea to support ties.
+--     Note: I'm not a musician, but since writing this a few days ago
+--           I've read outside HSoM that ties are determined by established
+--           engraving conventions, given the time and lengths of notes.
 --     == The problem. ==
 --     Euterpea does not output sheet music (a.k.a., "engravings"), though
 --     Isaac Reilly has created a system called Heqet that converts 
@@ -95,6 +98,8 @@ import HSoM
 --
 -- (6) Modify Euterpea to support barred notes (e.g., eighths, sixteenths).
 --     This could be done with a phrase annotation, like ties in (5).
+--     Note: I've read outside HSoM that ties are determined by established
+--           engraving conventions, given the time and lengths of notes.
 --
 -- (7) [Craziest idea] Named notes and regions.
 --
