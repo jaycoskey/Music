@@ -194,8 +194,84 @@ test_8_2_b2 = custPizz test_8_2_b1
 -- and both the ArpeggioUp and ArpeggioDown ornamentation.
 -- You should define myPlayer as a derivative of defPlayer or newPlayer.
 
--- TODO: Articulation -> Pedal
--- TODO: Ornament -> ArpeggioDown, ArpeggioUp
+applyArpeggio argOrderF performance = newPerformance
+    where sortByPitch (x@MEvent {ePitch = xp}) (y@MEvent {ePitch = yp}) = (argOrderF compare) xp yp
+          sortedByPitch = sortBy sortByPitch performance
+          groupLen      = toRational $ length performance
+          minDur        = minimum $ map (\e -> eDur e) performance
+          maxLagDur     = min wn (minDur / 2)  -- Larger lag => easier to hear while testing
+          stepLagDur    = maxLagDur / (groupLen - 1)
+          lagDurs       = map (* stepLagDur) [0 .. (groupLen - 1)]
+          applyLag lag e@MEvent{eDur = d, eTime = t} =
+              e { eTime = t + lag
+                , eDur = trace ("Applying lag of " ++ (show lag) ++ " at time " ++ (show t))
+                               d - lag
+                }
+          newPerformance = zipWith applyLag lagDurs sortedByPitch
+
+applyArpeggioDown performance = applyArpeggio flip performance
+applyArpeggioUp   performance = applyArpeggio  id  performance
+compareETime (x@MEvent {eTime = xt}) (y@MEvent {eTime = yt}) = xt == yt
+
+pasHandler_pedal :: PhraseAttribute -> Performance -> Performance
+-- See Figure 8.6
+-- Note: The Pedal articulation applies to all notes in the phrase,
+--       so there is no need to inspect the time of each note.
+-- TODO: Assuming for now that all events are notes.  Remove this assumption
+pasHandler_pedal pa performance = case pa of
+    Art Pedal        -> map newMEvent performance
+        where 
+              newMEvent (e@MEvent {eDur = d, eVol = v})
+                  = e { eDur = trace ( "Old note dur=" ++ (show d)
+                                     ++ "; New note dur=" ++ (show (10*d))
+                                     )
+                                     (10*d)
+                      }
+    Orn ArpeggioDown -> concatMap newMEventGroup $ groupBy compareETime performance
+        where newMEventGroup pf = if (length pf == 1) then pf
+                                                      else applyArpeggioDown pf
+    Orn ArpeggioUp   -> concatMap newMEventGroup $ groupBy compareETime performance
+        where newMEventGroup pf = if (length pf == 1) then pf
+                                                      else applyArpeggioUp   pf              
+    _                -> defPasHandler pa performance
+
+interpPhrase_pedal :: (PhraseAttribute -> Performance -> Performance) -- PasHandler
+                  -> (PMap a -> Context a -> [PhraseAttribute] -> Music a -> (Performance, DurT))
+interpPhrase_pedal pasHandler pm context pas m = (foldr pasHandler pf pas, durPerf)
+    where (pf, durPerf) = perf pm context m          
+
+player_pedal = MkPlayer { pName        = "CustPedal"
+                        , playNote     = defPlayNote        defNasHandler
+                        , interpPhrase = interpPhrase_pedal pasHandler_pedal
+                        --, notatePlayer = ()
+                        }
+pMap_pedal :: PlayerName -> Player Note1
+pMap_pedal "CustPedal" = player_pedal
+pMap_pedal p           = error "Use CustPedal player for testing"
+
+con_pedal = defCon { cPlayer = player_pedal }
+
+custPedal   mus = Modify (Phrase [Art Pedal])        mus
+custArpUp   mus = Modify (Phrase [Orn ArpeggioUp])   mus
+custArpDown mus = Modify (Phrase [Orn ArpeggioDown]) mus
+
+mkTestPiece_8_3 musicMap = (c 2 hn)
+                               :+: (musicMap $ chord [c 4 hn, e 4 hn, g 4 hn, b 4 hn])
+                               :+: (c 2 hn)
+
+piece_8_3               = mkTestPiece_8_3 id
+piece_8_3_arpDown       = mkTestPiece_8_3 custArpDown
+piece_8_3_arpUp         = mkTestPiece_8_3 custArpUp
+piece_8_3_pedal         = mkTestPiece_8_3 custPedal
+piece_8_3_pedal_arpDown = mkTestPiece_8_3 (custPedal . custArpDown)
+piece_8_3_pedal_arpUp   = mkTestPiece_8_3 (custPedal . custArpUp)
+
+test_8_3                = play piece_8_3
+test_8_3_arpDown        = playA pMap_pedal con_pedal piece_8_3_arpDown
+test_8_3_arpUp          = playA pMap_pedal con_pedal piece_8_3_arpUp
+test_8_3_pedal          = playA pMap_pedal con_pedal piece_8_3_pedal
+test_8_3_pedal_arpDown  = playA pMap_pedal con_pedal piece_8_3_pedal_arpDown
+test_8_3_pedal_arpUp    = playA pMap_pedal con_pedal piece_8_3_pedal_arpUp
 
 -- ===== Exercise 8.4 =====
 -- Define a player jazzPlayer that plays a melody using a jazz "swing" feel.
