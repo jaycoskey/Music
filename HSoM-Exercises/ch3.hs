@@ -109,7 +109,7 @@ chrom p1 p2 = foldr1 (:+:) musics
     musics = map mkQn gamut
 
 -- ===== Exercise 3.12 =====
-majorScale = [2, 2, 1, 2, 2, 2] :: [Int]
+majorScale = [2, 2, 1, 2, 2, 2, 1] :: [Int]
 chromaticScale = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] :: [Int]
 mkScale :: Pitch -> [Int] -> Music Pitch
 mkScale p ints = foldr1 (:+:) $ reverse musics
