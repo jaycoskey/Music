@@ -284,36 +284,96 @@ test_8_3_pedal_arpUp    = playA pMap_pedal con_pedal piece_8_3_pedal_arpUp
 -- .... NoteFun (Pitch, [a]) = Context (Pitch, [a]) -> Dur -> (Pitch, [a]) -> Performance
 -- defPlayNote   :: (Context  (Pitch, [a]) -> a -> MEvent -> MEvent) -> NoteFun (Pitch, [a])
 -- defNasHandler ::  Context a -> NoteAttribute -> MEvent -> MEvent (?)
-{-
-jazzPlayNote :: (Context  (Pitch, [a]) -> a -> MEvent -> MEvent) -> NoteFun (Pitch, [a])
-jazzPlayNote
+
+-- TODO: Complete this answer.  Currently, it doesn't seem that the music arg is "swingified" at all.
+
+playNote_jazz
+    :: (Context (Pitch, [NoteAttribute]) -> NoteAttribute -> MEvent -> MEvent)
+       -> -- NoteFun (Pitch, [NoteAttribute])
+          Context (Pitch, [NoteAttribute]) -> Dur -> (Pitch, [NoteAttribute]) -> Performance
+playNote_jazz
     nasHandler
     c@(Context cTime cPlayer cInst cDur cPch cVol cKey)
     d
-    (p, nas) = [ foldr (nasHandler c) initEv nas ]
-               where initEv = MEvent { eTime   = cTime
-                                     , eInst   = cInst
-                                     , eDur    = d * cDur
-                                     , eVol    = cVol
-                                     , ePitch  = absPitch p + cPch
-                                     , eParams = []
-                                     }
+    (p, nas)
+        = [foldr (nasHandler c) initEv nas]
+            where
+                  num       = numerator
+                  den       = denominator
+                  rmod1 rat = ((num rat) `mod` (den rat)) % (den rat)
+                  initEv = trace (  "eTime =  " ++ (show cTime)               ++ "\n"
+                              -- ++ "eInst =  " ++ (show cInst)               ++ "\n"
+                                 ++ "eDur =   " ++ (show $ d * cDur)          ++ "\n"
+                              -- ++ "eVol =   " ++ (show cVol)                ++ "\n"
+                                 ++ "ePitch = " ++ (show $ absPitch p + cPch) -- ++ "\n"
+                                 )
+                                 MEvent { eTime   = cTime
+                                        , eInst   = cInst
+                                        -- TODO: How to pattern match on Rationals?
+                                        , eDur    = if cDur == (1/8)
+                                                    then if rmod1 cTime == (0/3)
+                                                         then      (2/3) * 2 * d * cDur
+                                                         else if rmod1 cTime == (2/3)
+                                                              then (2/3)     * d * cDur
+                                                              else             d * cDur
+                                                    else d * cDur
+                                        , eVol    = cVol
+                                        , ePitch  = absPitch p + cPch
+                                        , eParams = []
+                                        }
 
-jazzPlayer :: Player (Pitch, [NoteAttribute])
-jazzPlayer = MkPlayer { pName        = "JazzPlayer"
-                      , playNote     = jazzPlayNote    defNasHandler
-                      , interpPhrase = defInterpPhrase defPasHandler
-                      --, notatePlayer = ()
-                      }
-jazzCon = defCon { cPlayer = jazzPlayer }
+pMap_jazz :: PlayerName -> Player Note1
+pMap_jazz "CustJazz" = player_pedal
+pMap_jazz p           = error "Use CustJazz player for testing"
 
-aps2ens :: [AbsPitch] -> Music Pitch
-aps2ens aps = line $ map mkEn aps
-    where mkEn = \ap -> Prim $ Note en $ pitch ap
-mus_8_4 = aps2ens [40 .. 55]
--}
--- play mus_8_4
--- playA pMap_8_4 jazzCon mus_8_4
+player_jazz :: Player (Pitch, [NoteAttribute])
+player_jazz = MkPlayer { pName       = "CustJazz"
+                       , playNote     = playNote_jazz   defNasHandler
+                       , interpPhrase = defInterpPhrase defPasHandler
+                       --, notatePlayer = ()
+                       }
+
+con_jazz = defCon { cPlayer = player_jazz }
+
+-- ===== Ex. 8.4 Test Music =====
+-- Some sample music representing Glenn Miller's "In the Mood" grabbed from ch4.hs.
+repd d = \ns -> line $ map (\x -> x d) ns
+hns = repd hn
+qns = repd qn
+ens = repd en
+bens = ens -- Barred eighth-notes
+twice m = m :+: m
+whosTheLivin = bens [b 3, d 4, g 4, b 3] :+: bens [d 4, g 4, b 3, d 4]
+               :+: bens [g 4, b 3, d 4, g 4] :+: g 4 qn :+: qnr
+-- Note: The notation "_5_8" indicates measures 5 though 8.
+itm_treb_5_8 = twice whosTheLivin
+itm_bass_5_8 = hns [g 2, b 2]
+               :+: d 3 hn :+: qns [e 3, d 3]
+               :+: hns [g 2, b 2]
+               :+: d 3 hn :+: g 3 qn :+: {-NATURAL-} f 3 qn
+itm_5_8      = itm_treb_5_8 :=: itm_bass_5_8
+itm_sample   = Modify (Tempo (90/60)) $ Modify (KeySig G Major) $ itm_5_8
+
+-- Hand-tweaked to sound like swing.
+whosTheLivin_hand = Modify (Tempo (3/2))
+                      (
+                        line [b 3 qn, d 4 en, g 4 qn, b 3 en]
+                        :+: line [d 4 qn, g 4 en, b 3 qn, d 4 en]
+                        :+: line [g 4 qn, b 3 en, d 4 qn, g 4 en]
+                      )
+                    :+: g 4 qn :+: qnr
+itm_treb_5_8_hand = twice whosTheLivin_hand
+itm_5_8_hand      = itm_treb_5_8_hand :=: itm_bass_5_8
+itm_sample_hand   = Modify (Tempo (90/60)) $ Modify (KeySig G Major) $ itm_5_8_hand
+
+-- ===== Ex. 8.4 Tests =====
+play_8_4       = playA pMap_jazz con_jazz
+test_8_4_std   = play     itm_sample
+test_8_4_hand1 = play     itm_sample_hand
+test_8_4_hand2 = play_8_4 itm_sample_hand  -- Note: Sounds good, and different from test_8_4_hand1, which is promising.
+test_8_4_hand  = play_8_4 itm_sample_hand
+test_8_4_jazz  = play_8_4 itm_sample       -- TODO: Goal: This should sound exactly like test_8_4_hand.
+
 
 -- ===== Exercise 8.5 =====
 -- Implement the ornamentation DiatonicTrans, which is a "diatonic transposition" within
