@@ -368,12 +368,17 @@ itm_sample_hand   = Modify (Tempo (90/60)) $ Modify (KeySig G Major) $ itm_5_8_h
 
 -- ===== Ex. 8.4 Tests =====
 play_8_4       = playA pMap_jazz con_jazz
+
 test_8_4_std   = play     itm_sample
 test_8_4_hand1 = play     itm_sample_hand
-test_8_4_hand2 = play_8_4 itm_sample_hand  -- Note: Sounds good, and different from test_8_4_hand1, which is promising.
-test_8_4_hand  = play_8_4 itm_sample_hand
-test_8_4_jazz  = play_8_4 itm_sample       -- TODO: Goal: This should sound exactly like test_8_4_hand.
 
+-- Note: test_8_4_hand2 is what test_8_4_jazz should sound like.
+--       test_8_4_hand2 sounds different from test_8_4_hand1,
+--       which shows that playNote_jazz is having an impact.
+test_8_4_hand2 = play_8_4 itm_sample_hand
+
+-- TODO: Make this sound exactly like test_8_4_hand2.
+test_8_4_jazz  = play_8_4 itm_sample
 
 -- ===== Exercise 8.5 =====
 -- Implement the ornamentation DiatonicTrans, which is a "diatonic transposition" within
