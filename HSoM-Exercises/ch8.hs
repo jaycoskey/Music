@@ -327,9 +327,6 @@ mus_8_4 = aps2ens [40 .. 55]
 --   In C Major: diatonicTrans 2 (c 4 en :+: d 4 en :+: e 4 en) => e 4 en :+: f 4 en  :+: g 4 en
 --   In G Major: diatonicTrans 2 (c 4 en :+: d 4 en :+: e 4 en) => e 4 en :+: fs 4 en :+: g 4 en
 
--- TODO: Resolve this issue:
---       Modify KeySig statements do not change value of cKey in Context sent to pasHandler.
---       See below for default.
 mkScaleDiffs :: Mode -> [AbsPitch]
 mkScaleDiffs mode = case mode of
     Major -> [2,2,1,2,2,2,1]
@@ -346,67 +343,79 @@ mkRefScaleNotes pitchClass mode = reverse $ scanr (+) seed aps
 --       associated with Context's cKey.  This is true for Major or Minor modes, where the
 --       largest gap between adjascent notes is two semitones.
 --       (But this would not hold true for some scales in non-Western music.)
--- Add Context as an argument to make the KeySig available to this handler.
 pasHandler_diaTrans :: Context a -> PhraseAttribute -> Performance -> Performance
-pasHandler_diaTrans (c@Context{cKey=(pc,mode)}) (Orn (DiatonicTrans n)) pf = map diaTrans pf
-  where
-    refScale        = mkRefScaleNotes pc mode
-    refAbsPitch     = absPitch (pc, 0)
-    diaTrans (e@MEvent {ePitch = ap}) = e {ePitch = newAbsPitch}
-      where
-        relOctaves      =  (ap - refAbsPitch) `div` 12
-        basePitch       = ((ap - refAbsPitch) `mod` 12) + refAbsPitch
-        basePitch_1     = basePitch - 1  -- The flat of the given note.
-        transOctaves    = n `div` 8
-        transSemitones  = n `mod` 8
-        maybeIndex      = elemIndex basePitch refScale
-        maybeIndex_1    = elemIndex basePitch_1 refScale
-        newBasePitch    = case (maybeIndex, maybeIndex_1) of
-                            (Just index, _           ) -- origRelAbsPitch is in the scale
-                              -> (refScale !! (index   + transSemitones)) + 0 
-                            (_,          Just index_1) -- origRelAbsPitch not in scale.  Treat it as a sharp.
-                              -> (refScale !! (index_1 + transSemitones)) + 1
-                            (_,          _)       -- Should not occur in Major or Minor modes.
-                              -> error (  "error: Neither note #"
-                                       ++ (show basePitch)
-                                       ++ " nor its flat found in reference scale for "
-                                       ++ (show pc) ++ " " ++ (show mode)
-                                       ++ ": "
-                                       ++ (show refScale)
-                                       )
-        newAbsPitch     = trace (
-                                   "Key           = " ++ (show pc) ++ " "
-                                                      ++ (show mode) ++ "\n"
-                                ++ "ap            = " ++ (show ap)             ++ "\n"
-                                ++ "n             = " ++ (show n)              ++ "\n"
-                                ++ "refAbsPitch   = " ++ (show refAbsPitch)    ++ "\n"
-                                ++ "refScale      = " ++ (show refScale)       ++ "\n"
-                                ++ "relOctaves    = " ++ (show relOctaves)     ++ "\n"
-                                ++ "basePitch     = " ++ (show basePitch)      ++ "\n"
-                                ++ "basePitch_1   = " ++ (show basePitch_1)    ++ "\n"
-                                ++ "transOctaves  = " ++ (show transOctaves)   ++ "\n"
-                                ++ "transSemitones= " ++ (show transSemitones) ++ "\n"
-                                ++ "newBasePitch  = " ++ (show newBasePitch)   ++ "\n"
-                                ++ "newAbsPitch   = " ++ (show result)         ++ "\n"
-                                )
-                                result
-                            where result = newBasePitch + (12 * relOctaves) + (12 * transOctaves)
-        newEvent        = e {ePitch = newAbsPitch}
-pasHandler_diaTrans c pa pf = defPasHandler pa pf -- Default PasHandler does not use a Context arg.
+pasHandler_diaTrans c@Context{cKey = (pc, mode)} (Orn (DiatonicTrans n)) pf 
+  = (map diaTrans pf)
+    where
+      refScale        = mkRefScaleNotes pc mode
+      refAbsPitch     = absPitch (pc, 0)
+      diaTrans (e@MEvent {ePitch = ap}) = e {ePitch = newAbsPitch}
+        where
+          relOctaves      =  (ap - refAbsPitch) `div` 12
+          basePitch       = ((ap - refAbsPitch) `mod` 12) + refAbsPitch
+          basePitch_1     = basePitch - 1  -- The flat of the given note.
+          transOctaves    = n `div` 8
+          transSemitones  = n `mod` 8
+          maybeIndex      = elemIndex basePitch refScale
+          maybeIndex_1    = elemIndex basePitch_1 refScale
+          newBasePitch    = case (maybeIndex, maybeIndex_1) of
+                              (Just index, _           ) -- origRelAbsPitch is in the scale
+                                -> (refScale !! (index   + transSemitones)) + 0 
+                              (_,          Just index_1) -- origRelAbsPitch not in scale.  Treat it as a sharp.
+                                -> (refScale !! (index_1 + transSemitones)) + 1
+                              (_,          _)       -- Should not occur in Major or Minor modes.
+                                -> error (  "error: Neither note #"
+                                         ++ (show basePitch)
+                                         ++ " nor its flat found in reference scale for "
+                                         ++ (show pc) ++ " " ++ (show mode)
+                                         ++ ": "
+                                         ++ (show refScale)
+                                         )
+          newAbsPitch       = trace (
+                                      "Key           = " ++ (show pc) ++ " "
+                                                         ++ (show mode) ++ "\n"
+                                    ++ "ap            = " ++ (show ap)             ++ "\n"
+                                    ++ "n             = " ++ (show n)              ++ "\n"
+                                    ++ "refAbsPitch   = " ++ (show refAbsPitch)    ++ "\n"
+                                    ++ "refScale      = " ++ (show refScale)       ++ "\n"
+                                    ++ "relOctaves    = " ++ (show relOctaves)     ++ "\n"
+                                    ++ "basePitch     = " ++ (show basePitch)      ++ "\n"
+                                    ++ "basePitch_1   = " ++ (show basePitch_1)    ++ "\n"
+                                    ++ "transOctaves  = " ++ (show transOctaves)   ++ "\n"
+                                    ++ "transSemitones= " ++ (show transSemitones) ++ "\n"
+                                    ++ "newBasePitch  = " ++ (show newBasePitch)   ++ "\n"
+                                    ++ "newAbsPitch   = " ++ (show result)         ++ "\n"
+                                    )
+                                    result
+                                where result = newBasePitch
+                                                   + (12 * relOctaves)
+                                                   + (12 * transOctaves)
+          newEvent          = e {ePitch = newAbsPitch}
+pasHandler_diaTrans c pa pf = defPasHandler pa pf
 
 interpPhrase_diaTrans
     :: (Context a -> PhraseAttribute -> Performance -> Performance) -- Not a PasHandler
         -> (PMap a -> Context a -> [PhraseAttribute] -> Music a -> (Performance, DurT))
--- Note: We pass context to the pasHandler, since that's where the KeySig is.
---       We can't just change
---           foldr pasHandler pf pas
---       to
---           foldr (pasHandler context) pf pas
---       because then whatever cKey is in Context will persist across pasHandler calls.
---       KeySig modifications are handled within the perf function, defined in HSoM/Performance.lhs.
--- TODO: Thread Modify KeySig changes through Context so they will be seen by the pasHandler.
-interpPhrase_diaTrans pasHandler pm context pas m = (foldr (pasHandler context) pf pas, durPerf)
-    where (pf, durPerf) = perf pm context m
+interpPhrase_diaTrans pasHandler pm context pas m = case m of
+    (Prim (Note d p))         -> (foldr (pasHandler context) pf pas, durPerf)
+      where (pf,     durPerf)     = perf pm context m
+    (Prim (Rest d))           -> (foldr (pasHandler context) pf pas, durPerf)
+      where (pf,     durPerf)     = perf pm context m
+    m1 :+: m2                 -> (pf1' ++ pf2', durPerf1 + durPerf2)
+      where (pf1,    durPerf1)    = perf pm context m1
+            (pf2,    durPerf2)    = perf pm context m2
+            pf1' = foldr (pasHandler context) pf1 pas
+            pf2' = foldr (pasHandler context) pf2 pas
+    m1 :=: m2                 -> (merge (pf1) (pf2), max durPerf1 durPerf2)
+      where (pf1,    durPerf1)    = perf pm context m1
+            (pf2,    durPerf2)    = perf pm context m2
+            pf1' = foldr (pasHandler context) pf1 pas
+            pf2' = foldr (pasHandler context) pf2 pas
+    Modify (KeySig pc mode) m -> (foldr (pasHandler context') pf_key pas, durPerf_key)
+      where (pf_key, durPerf_key) = perf pm (context {cKey = (pc, mode)}) m
+            context' = context {cKey = (pc, mode) }
+    Modify _                m -> (foldr (pasHandler context) pf pas, durPerf)
+      where (pf,     durPerf)     = perf pm context m
 
 player_diaTrans = MkPlayer { pName        = "DiaTrans"
                            , playNote     = defPlayNote           defNasHandler
@@ -417,7 +426,7 @@ pMap_diaTrans :: PlayerName -> Player Note1
 pMap_diaTrans "DiaTrans" = player_diaTrans
 pMap_diaTrans p          = error "Use DiaTrans player for testing"
 
-con_diaTrans = defCon { cPlayer = player_diaTrans {- Test impact of cKey: cKey = (F, Major) -} }
+con_diaTrans = defCon { cPlayer = player_diaTrans }
 
 diatonicTrans :: Int -> Music a -> Music a
 diatonicTrans n mus = Modify (Phrase [Orn (DiatonicTrans n)]) mus
