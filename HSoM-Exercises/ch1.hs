@@ -30,38 +30,42 @@ import HSoM
 -- ["I", "love", "Euterpea"] :: [String] or [[Char]]
 
 -- ===== Exercise 1.4 =====
-hNote :: Dur -> Pitch -> Music Pitch
-hNote d p = note d p :=: note d (trans (-3) p)
-
-hNoteTrans :: Dur -> Pitch -> Int -> Music Pitch
-hNoteTrans d p n = note d p :=: note d (trans n p)
+-- Ex: Modify the defs of hNote and hList so they each take an interval argument
 
 p1 = (C, 4)
 p2 = (E, 4)
 p3 = (G, 4)
 
-mel :: Music Pitch
-mel = hNote qn p1 :+: hNote qn p2 :+: hNote qn p3
-
-melTrans :: Music Pitch
-melTrans = hNoteTrans qn p1 (-3) :+: hNoteTrans qn p2 (-3) :+: hNoteTrans qn p3 (-3)
-
-testTrans = mel :+: wnr :+: melTrans
--- play testTrans
+-- Code from HSoM, Chapter 1:
+hNote :: Dur -> Pitch -> Music Pitch
+hNote d p = note d p :=: note d (trans (-3) p)
 
 hList :: Dur -> [Pitch] -> Music Pitch
 hList d [] = rest 0
 hList d (p : ps) = hNote d p :+: hList d ps
 
-hListTrans :: Dur -> [Pitch] -> Int -> Music Pitch
-hListTrans d [] n = rest 0
-hListTrans d (p : ps) n = hNoteTrans d p n :+: hListTrans d ps n
+mel :: Music Pitch
+mel = hNote qn p1 :+: hNote qn p2 :+: hNote qn p3
 
-melList :: Music Pitch
-melList = hList qn [p1, p2, p3]
+-- Code for this exercise
+hNote_trans :: Dur -> Pitch -> Int -> Music Pitch
+hNote_trans d p n = note d p :=: note d (trans n p)
 
-melListTrans :: Music Pitch
-melListTrans = hListTrans qn [p1, p2, p3] (-3)
+hList_trans :: Dur -> [Pitch] -> Int -> Music Pitch
+hList_trans d [] n = rest 0
+hList_trans d (p : ps) n = hNote_trans d p n :+: hList_trans d ps n
 
-testListTrans = mel :+: wnr :+: melTrans :+: wnr :+: melList :+: wnr :+: melListTrans
--- play testListTrans
+-- Test music
+mel_trans :: Music Pitch
+mel_trans = hNote_trans qn p1 (-3) :+: hNote_trans qn p2 (-3) :+: hNote_trans qn p3 (-3)
+
+mel_list :: Music Pitch
+mel_list = hList qn [p1, p2, p3]
+
+mel_list_trans :: Music Pitch
+mel_list_trans = hList_trans qn [p1, p2, p3] (-3)
+
+music_1_4 = mel :+: hnr :+: mel_trans :+: hnr :+: mel_list :+: hnr :+: mel_list_trans
+
+-- Test code
+test_1_4 = play music_1_4  -- Test: All four phrases should sound identical.
