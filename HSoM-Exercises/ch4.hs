@@ -5,6 +5,10 @@ import Euterpea.Music
 import HSoM
 
 -- ===== Exercise 4.1 =====
+-- Ex: "Transcribe" a "simple" piece of music.
+-- TODO: Add additional chords from score.
+-- TODO: Add effect of accidental:natural to F quarter notes in measures #8 and #31.
+
 -- Notes repeated in series
 repd d = \ns -> line $ map (\x -> x d) ns
 wns = repd wn
@@ -24,11 +28,12 @@ cens = chordd en
 twice m = m :+: m
 repeatWithEnd2 common end1 end2 = common :+: end1 :+: common :+: end2
 
--- DONE: Add key signature.  One sharp => G major (E minor)
--- TODO: Add additional chords from score.
--- TODO: Add effect of accidental:natural to F quarter notes in measures #8 and #31.
-
 -- TITLE: In The Mood.  Words and Music by Joe Garland.  Arranged by Phil Guberman
+-- Found in the book "Easy Piano"
+
+-- ========== ========== ========== =====
+-- ===== FIRST HALF OF IN THE MOOD  =====
+-- ========== ========== ========== =====
 itm_treb_1_4 = bens [g 3, b 3, d 4, g 4] :+: g 4 en :+: g 4 dqn
                :+: bens [a 3, c 4, e 4, e 4] :+: e 4 en :+: e 4 dqn
                :+: bens [g 3, b 3, d 4, g 4] :+: g 4 qn :+: (g 4 den :+: f 4 sn)
@@ -64,9 +69,9 @@ itm_bass_16a = ef 3 hn :+: g 3 qn :+: d 3 qn
 itm_treb_16b = itm_treb_16a
 itm_bass_16b = itm_bass_16a
 
--- ========== ========== ========== ==========
--- SECOND HALF
--- ========== ========== ========== ==========
+-- ========== ========== ========== =====
+-- ===== SECOND HALF OF IN THE MOOD =====
+-- ========== ========== ========== =====
 inTheMood_treb = g 4 qn :+: (e 4 en :+: g 4 (en + qn)) :+: qnr
 thatsWhat_treb = denr :+: c 4 sn :+: (e 4 den :+: g 4 sn) :+: b 4 en :+: b 4 dqn
 itm_treb_17_20 = twice $ inTheMood_treb :+: thatsWhat_treb
@@ -109,8 +114,11 @@ itm_bass_32a = cqns [d 3, c 4] :+: cqns [ef 3, df 4]
 itm_treb_32b = d 5 qn :+: (bf 4 en :+: a 4 (en + en) :+: g 4 en) :+: qnr
 itm_bass_32b = cqns [d 3, c 4] :+: (cens [ef 3, df 4] :+: cqns [d 3, c 4] :+: cens [g 3, b 3]) :+: qnr
 
-instr_treb = instrument AcousticGrandPiano  -- Trumpet
-instr_bass = instrument AcousticGrandPiano  -- Trombone
+-- ========== ========== ========== =====
+-- ===== COMBINE 1st & 2nd HALVES   =====
+-- ========== ========== ========== =====
+instr_treb = instrument AcousticGrandPiano
+instr_bass = instrument AcousticGrandPiano
 
 zipStaves :: [Music a] -> [Music a] -> Music a
 zipStaves trebs basses =
@@ -118,10 +126,10 @@ zipStaves trebs basses =
                    (map instr_treb trebs)
                    (map instr_bass basses)
 
-itm_1_4 = zipStaves [itm_treb_1_4] [itm_bass_1_4]
-itm_5_15 = zipStaves
-               [itm_treb_5_8, itm_treb_9_12, itm_treb_13_15]
-               [itm_bass_5_8, itm_bass_9_12, itm_bass_13_15]
+itm_1_4   = zipStaves [itm_treb_1_4] [itm_bass_1_4]
+itm_5_15  = zipStaves
+                [itm_treb_5_8, itm_treb_9_12, itm_treb_13_15]
+                [itm_bass_5_8, itm_bass_9_12, itm_bass_13_15]
 
 itm_16a   = zipStaves [itm_treb_16a] [itm_bass_16a]
 itm_16b   = zipStaves [itm_treb_16b] [itm_bass_16b]
@@ -141,7 +149,12 @@ itm = Modify (Tempo (90/60)) $ Modify (KeySig G Major)
 itm_short = Modify (Tempo (180/120)) $ Modify (KeySig G Major)
         $ itm_1_4 :+: itm_5_15 :+: itm_16b :+: itm_17_31 :+: itm_32b
 
+test_4_1_a = play itm
+test_4_1_b = play itm_short
+
 -- ===== Exercise 4.2 =====
+
+-- Code from Chapter 4 of HSoM:
 prefixes :: [a] -> [[a]]
 prefixes [] = []
 prefixes (x : xs) = let f pf = x : pf
@@ -155,31 +168,34 @@ prefix mels = m :+: transpose 5 m :+: m
         m2 = transpose 12 (line (concat (prefixes (reverse mels))))
         m  = instrument Flute m1 :=: instrument VoiceOohs m2
 
+-- Test music:
 mel1 = [c 5 en, e 5 sn, g 5 en, b 5 sn, a 5 en, f 5 sn, d 5 en, b 4 sn, c 5 en]
 mel2 = [c 5 sn, e 5 sn, g 5 sn, b 5 sn, a 5 sn, f 5 sn, d 5 sn, b 4 sn, c 5 sn]
-closeEncounters  = [g 3 qn, a 3 qn, f 3 qn, f 2 qn, c 3 qn]
-closeEncounters' = map (transpose 12) closeEncounters
+closeEncounters       = [g 3 qn, a 3 qn, f 3 qn, f 2 qn, c 3 qn]
+closeEncounters_trans = map (transpose 12) closeEncounters
 
--- play $ line mel1
--- play $ line mel2
--- play $ line closeEncounters
-
--- play $ prefix mel1
--- play $ prefix mel2
--- play $ prefix closeEncounters
+-- Test code:
+test_4_2_a = play $ line mel1
+test_4_2_b = play $ line mel2
+test_4_2_c = play $ line closeEncounters
+test_4_2_d = play $ line closeEncounters_trans
 
 -- ===== Exercise 4.3 =====
-f_m1_HSoM, f_m2_HSoM :: [Music a] -> Music a
-f_m1_HSoM mels = line (concat (prefixes mels))
-f_m2_HSoM mels = transpose 12 (line (concat (prefixes (reverse mels))))
+-- Ex: Generalize the "prefix" function in Chapter 4 of HSoM.
+
+-- Code for this exercise, for parts 1, 2, and 3:
 type MusicAgg a = [Music a] -> Music a
+
+agg1, agg2 :: MusicAgg a  -- See definition of prefix in Chapter 4 of HSoM
+agg1 mels = line (concat (prefixes mels))
+agg2 mels = transpose 12 (line (concat (prefixes (reverse mels))))
 
 prefix_poly
     ::  MusicAgg a -> MusicAgg a -> Rational -> InstrumentName -> InstrumentName
     -> [Music a] -> Music a
-prefix_poly f_m1 f_m2 pDelay instr1 instr2  mels = m :+: transpose 5 m :+: m
-  where m1 = line (concat (prefixes mels))
-        m2 = transpose 12 (line (concat (prefixes (reverse mels))))
+prefix_poly agg1 agg2 pDelay instr1 instr2 mels = m :+: transpose 5 m :+: m
+  where m1 = agg1 mels
+        m2 = agg2 mels
         m  = instrument instr1 m1
                  :=: ((Prim $ Rest (pDelay * (dur m1))) :+: instrument instr2 m2)
 
@@ -195,9 +211,14 @@ prefix_poly f_m1 f_m2 pDelay instr1 instr2  mels = m :+: transpose 5 m :+: m
 -- Part 3
 -- In the function prefix_poly, a delay of pDelay * (dur m1) is inserted in the defn of m.
 
-f_m1_test, f_m2_test :: [Music a] -> Music a
-f_m1_test mels = line $ concat $ take 5 $ drop 3 $ cycle $ prefixes mels
-f_m2_test mels = transpose 12 $ line $ concat $ take 5 $ drop 3 $ cycle $ prefixes $ reverse mels
-prefix_test = prefix_poly f_m1_test f_m2_test (1/3) Bagpipe Trumpet closeEncounters
+-- Note: prefix_poly is also parameterized by its two MusicAgg functions.
 
--- play prefix_test -- Note: Sounds hideous, doesn't it?
+agg_4_3_a, agg_4_3_b :: [Music a] -> Music a
+agg_4_3_a mels = line $ concat $ take 5 $ drop 3 $ cycle $ prefixes mels
+agg_4_3_b mels = transpose 12 $ line $ concat $ take 5 $ drop 3 $ cycle $ prefixes $ reverse mels
+
+-- Test music
+music_4_3 = prefix_poly agg_4_3_a agg_4_3_b (1/3) Bagpipe Trumpet closeEncounters
+
+-- Test code
+test_4_3 = play music_4_3  -- Test: Sounds hideous

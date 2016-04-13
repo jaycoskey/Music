@@ -12,7 +12,7 @@ import Euterpea.Music
 import HSoM
 
 -- ===== Exercise 8.1 =====
--- Note to self: playA defPMap defCon <music_a>
+-- Ex: Complete the definition of myPasHandler from Chapter 8 of HSoM.
 
 -- From Euterpea-Music-Note-Performance.lhs:
 -- defPasHandler (Dyn (Accent x))    = 
@@ -57,6 +57,7 @@ myPMap p           = error "Use CustCresc player for testing"
 
 myCon = defCon { cPlayer = myPlayer }
 
+-- Test music
 -- custCresc :: Music a -> Music a
 custCresc mus = Modify (Phrase [Dyn (Crescendo (3/1))]) mus
 
@@ -66,22 +67,26 @@ notes         = line $ map ap2Note aps
                   where ap2Note = \ap -> Prim $ Note notes_dur $ pitch ap
 notes_soft    = addVolume 31 $ notes
 notes_cresc   = custCresc notes_soft
-test_8_1      = notes_soft :+: notes_cresc
+music_8_1     = notes_soft :+: notes_cresc
 
--- Test: play               test_8_1
--- Test: playA myPMap myCon test_8_1
+-- Test code
+play_8_1   = playA myPMap myCon
+test_8_1_a = play     music_8_1  -- Test: All soft notes
+test_8_1_b = play_8_1 music_8_1  -- Test: First soft notes, then crescendo notes.
 
 -- ===== Exercise 8.2 =====
--- Choose some of the other phrase attributes and provide interpretations for them.
+-- Ex: Choose some of the other phrase attributes and provide interpretations for them.
 -- Note: You might need to access the cKey field.
 
--- From Figure 8.4:
+-- From Figure 8.4 of HSoM:
 -- data PhraseAttribute = Dyn Dynamic
 --                      | Tmp Tempo
 --                      | Art Articulation
 --                      | Orn Ornament
 
--- ===== Tempo -> Ritardando =====
+-- ----- ----- ----- ----- -----
+-- Part 1: Tempo -> Ritardando
+-- ----- ----- ----- ----- -----
 pasHandler_slow :: PhraseAttribute -> Performance -> Performance
 -- See Figure 8.6
 pasHandler_slow (Tmp (Ritardando x)) performance = changeTempoBy x
@@ -128,12 +133,15 @@ con_slow = defCon { cPlayer = player_slow }
 -- custCresc :: Music a -> Music a
 custSlow mus = Modify (Phrase [Tmp (Ritardando (5/1))]) mus
 
+-- Test music
 -- Defined in Ex 8.1: notes
 notes_loud = notes
 notes_slow = custSlow notes_loud
 test_8_2_a = notes_loud :+: notes_slow
 
--- ===== Articulation -> Pizzicato =====
+-- ----- ----- ----- ----- -----
+-- Part 2: Articulation -> Pizzicato
+-- ----- ----- ----- ----- -----
 -- TODO: Why is the first note in test_8_2_b2 silent when played Pizzicato?
 -- TODO: Why is the second note in the result of shortenNote silent,
 --         even without setting eVol = 0?
@@ -183,17 +191,23 @@ con_pizz = defCon { cPlayer = player_pizz }
 -- custPizz :: Music a -> Music a
 custPizz mus = Modify (Phrase [Art Pizzicato]) mus
 
-test_8_2_b1 = instrument Violin $ line [c 4 hn, e 4 hn, g 4 hn, b 4 hn]
-test_8_2_b2 = custPizz test_8_2_b1
+-- Test music
+music_8_2_b1 = instrument Violin $ line [c 4 hn, e 4 hn, g 4 hn, b 4 hn]
+music_8_2_b2 = custPizz music_8_2_b1
 
--- Test: play                     test_8_2_b1
--- Test: playA pMap_pizz con_pizz test_8_2_b2
+-- Test code
+play_8_2_b  = playA pMap_pizz con_pizz
+test_8_2_b1 = play       music_8_2_b1  -- Legato notes
+
+-- Pizzicato notes (well, really stacatto).  TODO: Why is the first note silent? 
+test_8_2_b2 = play_8_2_b music_8_2_b2
 
 -- ===== Exercise 8.3 =====
--- Define a play myPlayer that appropriately handles the Pedal articulation
--- and both the ArpeggioUp and ArpeggioDown ornamentation.
+-- Ex: Define a play myPlayer that appropriately handles the Pedal articulation
+--     and both the ArpeggioUp and ArpeggioDown ornamentation.
 -- You should define myPlayer as a derivative of defPlayer or newPlayer.
 
+-- Code common to both arpeggio directions.  argOrderF determines whether the arpeggio goes up or down.
 applyArpeggio argOrderF performance = newPerformance
     where sortByPitch (x@MEvent {ePitch = xp}) (y@MEvent {ePitch = yp}) = (argOrderF compare) xp yp
           sortedByPitch = sortBy sortByPitch performance
@@ -256,6 +270,7 @@ custPedal   mus = Modify (Phrase [Art Pedal])        mus
 custArpUp   mus = Modify (Phrase [Orn ArpeggioUp])   mus
 custArpDown mus = Modify (Phrase [Orn ArpeggioDown]) mus
 
+-- Test music
 mkTestPiece_8_3 musicMap = (c 2 hn)
                                :+: (musicMap $ chord [c 4 hn, e 4 hn, g 4 hn, b 4 hn])
                                :+: (c 2 hn)
@@ -267,16 +282,19 @@ piece_8_3_pedal         = mkTestPiece_8_3 custPedal
 piece_8_3_pedal_arpDown = mkTestPiece_8_3 (custPedal . custArpDown)
 piece_8_3_pedal_arpUp   = mkTestPiece_8_3 (custPedal . custArpUp)
 
+-- Test code
+play_8_3                = playA pMap_pedal con_pedal
+
 test_8_3                = play piece_8_3
-test_8_3_arpDown        = playA pMap_pedal con_pedal piece_8_3_arpDown
-test_8_3_arpUp          = playA pMap_pedal con_pedal piece_8_3_arpUp
-test_8_3_pedal          = playA pMap_pedal con_pedal piece_8_3_pedal
-test_8_3_pedal_arpDown  = playA pMap_pedal con_pedal piece_8_3_pedal_arpDown
-test_8_3_pedal_arpUp    = playA pMap_pedal con_pedal piece_8_3_pedal_arpUp
+test_8_3_arpDown        = play_8_3 piece_8_3_arpDown
+test_8_3_arpUp          = play_8_3 piece_8_3_arpUp
+test_8_3_pedal          = play_8_3 piece_8_3_pedal
+test_8_3_pedal_arpDown  = play_8_3 piece_8_3_pedal_arpDown
+test_8_3_pedal_arpUp    = play_8_3 piece_8_3_pedal_arpUp
 
 -- ===== Exercise 8.4 =====
--- Define a player jazzPlayer that plays a melody using a jazz "swing" feel.
---   * en :+: en => tempo (3/2) $ qn :+: en
+-- Ex: Define a player jazzPlayer that plays a melody using a jazz "swing" feel.
+--         * en :+: en => tempo (3/2) $ qn :+: en
 -- Note: Instead of being implemented as a PhraseFun, this can be implemented as a NoteFun
 --     that uses the cTime and cDur in the context to distinguish downbeat from upbeat.
 
@@ -285,7 +303,7 @@ test_8_3_pedal_arpUp    = playA pMap_pedal con_pedal piece_8_3_pedal_arpUp
 -- defPlayNote   :: (Context  (Pitch, [a]) -> a -> MEvent -> MEvent) -> NoteFun (Pitch, [a])
 -- defNasHandler ::  Context a -> NoteAttribute -> MEvent -> MEvent (?)
 
--- TODO: Complete this answer.  Currently, it doesn't seem that the music arg is "swingified" at all.
+-- TODO: Complete this answer.  "Swingification" not yet working.  See test code for details.
 
 playNote_jazz
     :: (Context (Pitch, [NoteAttribute]) -> NoteAttribute -> MEvent -> MEvent)
@@ -335,7 +353,9 @@ player_jazz = MkPlayer { pName       = "CustJazz"
 
 con_jazz = defCon { cPlayer = player_jazz }
 
--- ===== Ex. 8.4 Test Music =====
+-- ----- ----- ----- ----- -----
+-- Test music
+-- ----- ----- ----- ----- -----
 -- Some sample music representing Glenn Miller's "In the Mood" grabbed from ch4.hs.
 repd d = \ns -> line $ map (\x -> x d) ns
 hns = repd hn
@@ -366,7 +386,9 @@ itm_treb_5_8_hand = twice whosTheLivin_hand
 itm_5_8_hand      = itm_treb_5_8_hand :=: itm_bass_5_8
 itm_sample_hand   = Modify (Tempo (90/60)) $ Modify (KeySig G Major) $ itm_5_8_hand
 
--- ===== Ex. 8.4 Tests =====
+-- ----- ----- ----- ----- -----
+-- Test code
+-- ----- ----- ----- ----- -----
 play_8_4       = playA pMap_jazz con_jazz
 
 test_8_4_std   = play     itm_sample
@@ -381,9 +403,9 @@ test_8_4_hand2 = play_8_4 itm_sample_hand
 test_8_4_jazz  = play_8_4 itm_sample
 
 -- ===== Exercise 8.5 =====
--- Implement the ornamentation DiatonicTrans, which is a "diatonic transposition" within
--- a particular key.  The argument to DiatonicTrans is an integer representing the number of
--- scale degrees to do the transposition.
+-- Ex: Implement the ornamentation DiatonicTrans, which is a "diatonic transposition" within
+--     a particular key.  The argument to DiatonicTrans is an integer representing the number
+--     of scale degrees to do the transposition.
 --   diatonicTrans (C, Major) (c 4 en :+: d 4 en :+: e 4 en) => e 4 en :+: f 4 en  :+: g 4 en
 --   diatonicTrans (G, Major) (c 4 en :+: d 4 en :+: e 4 en) => e 4 en :+: fs 4 en :+: g 4 en
 -- Hint: You will need to use cKey to access the key from the context.
@@ -496,6 +518,7 @@ con_diaTrans = defCon { cPlayer = player_diaTrans }
 diatonicTrans :: Int -> Music a -> Music a
 diatonicTrans n mus = Modify (Phrase [Orn (DiatonicTrans n)]) mus
 
+-- Test music
 noteCount_trans        = 3
 music_8_5              = line [c 4 wn, e 4 wn, g 4 wn]
 music_8_5_CMajor       = Modify (KeySig C Major) music_8_5
@@ -503,9 +526,13 @@ music_8_5_CMajor_trans = diatonicTrans noteCount_trans music_8_5_CMajor
 music_8_5_GMajor       = Modify (KeySig G Major) music_8_5
 music_8_5_GMajor_trans = diatonicTrans noteCount_trans music_8_5_GMajor
 
+-- Test code
 play_8_5               = playA pMap_diaTrans con_diaTrans
-test_8_5               = play_8_5 music_8_5
+
+test_8_5_plain         = play_8_5 music_8_5
 test_8_5_CMajor        = play_8_5 music_8_5_CMajor
-test_8_5_CMajor_trans  = play_8_5 music_8_5_CMajor_trans
+test_8_5_CMajor_trans  = play_8_5 music_8_5_CMajor_trans  -- Transposed in CMajor
 test_8_5_GMajor        = play_8_5 music_8_5_GMajor
-test_8_5_GMajor_trans  = play_8_5 music_8_5_GMajor_trans
+test_8_5_GMajor_trans  = play_8_5 music_8_5_GMajor_trans  -- Transposed in GMajor
+
+test_8_5 = play_8_5 $ music_8_5_CMajor_trans :=: music_8_5_GMajor_trans -- Listen for intervals

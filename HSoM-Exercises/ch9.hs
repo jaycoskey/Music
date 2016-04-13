@@ -4,7 +4,7 @@ import Euterpea.Music
 
 import HSoM
 
--- Inserting here code from this chapter.
+-- Code from HSoM, Chapter 9:
 data Cluster = Cluster SNote [Cluster]
 type SNote   = (Dur,AbsPitch)
 
@@ -91,6 +91,7 @@ ss5  = ss  m5 4 45 (1/500)
 ss6  = ss' m5 4 45 (1/1000)
 
 -- ===== Exercise 9.1 =====
+
 scratchDog  = (transpose 30 tm1) :=: (wnr :+: transpose 36 tm1)
 scratchDog2 = (transpose 30 tm1) :=: (hnr :+: transpose 33 tm1) :=: (wnr :+: transpose 36 tm1)
 scratchDog3 = (transpose 30 tm1)
@@ -123,6 +124,9 @@ fringe_9_2 n (Cluster note cls) = concatl $ map (fringe (n-1)) cls
   where concatl xss = foldl1 ((++)) xss
 
 -- ===== Exercise 9.3 =====
+-- Ex: Experiment with self-similar programs.  Compose an interesting piece of music.
+
+-- Test music
 d1 = [hn,   qn,  hn,  qn,  hn]
 d2 = [dqn,  hn,  qn,  hn, dqn]
 d3 = [dqn, dqn,  hn, dqn, dqn]
@@ -142,13 +146,15 @@ m31=dp d3 p1; m32=dp d1 p2; m33=dp d3 p3; m34=dp d3 p4; m35=dp d3 p5
 tumbling_9_3_a = (transpose (12) m14) :=: (transpose (-12) $ revM m31)
 tumbling_9_3_b = (transpose (12) m22) :=: (transpose (-12) $ revM m14)
 tumbling_9_3_c = (transpose (12) m35) :=: (transpose (-12) $ revM m23)
--- Meh.
+
+-- Test code.  Meh.
+test_9_3_a = play tumbling_9_3_a
+test_9_3_b = play tumbling_9_3_b
+test_9_3_c = play tumbling_9_3_c
 
 -- ===== Exercise 9.4 =====
--- Play the levels of a Cluster in parallel.
--- They can be glued together using chord instead of line, as with fringe'/simToMusic'.
-tm2_9_4_a = ss' m2 6 50 (1/50)
--- But that doesn't play them all with the same duration.
+-- Ex: Play the levels of a Cluster in parallel.
+--     They can be glued together using chord instead of line, as with fringe'/simToMusic'.
 
 procrusteanize :: [Music a] -> [Music a]
 procrusteanize ms = map adjDur ms
@@ -164,10 +170,16 @@ ss_9_4 :: [SNote] -> Int -> AbsPitch -> Dur -> Music Pitch
 ss_9_4 pat n tr te =
    transpose tr $ tempo te $ simToMusic_9_4 $ fringe' n $ selfSim pat
 
+-- Test music
+tm2_9_4_a = ss'    m2 6 50 (1/50)
 tm2_9_4_b = ss_9_4 m2 6 50 (1/50)
 
+-- Test code
+test_9_4_a = play tm2_9_4_a  -- Test: Not all of the same duration.
+test_9_4_b = play tm2_9_4_b  -- Test: All of the same duration.
+
 -- ===== Exercise 9.5 =====
--- Use scales, and swap pitch & duration.
+-- Ex: Use scales, and swap pitch & duration.
 
 -- Instead of using
 --   * type AbsPitch = Int as a count of notes on the chromatic scale based at C, -1) (**)
@@ -190,8 +202,8 @@ data KCluster    = KCluster KNote [KCluster]
 
 type ScaleIntervals = [Int]
 mkScaleIntervals :: Mode -> ScaleIntervals
-mkScaleIntervals Minor = [2, 2, 1, 2, 2, 2]
-mkScaleIntervals Major = [2, 2, 1, 2, 2, 2]
+mkScaleIntervals Minor = [2, 1, 2, 2, 1, 2, 2]
+mkScaleIntervals Major = [2, 2, 1, 2, 2, 2, 1]
 
 toPitch :: KeyPitch -> Pitch
 toPitch ((pc, mode), kp) = pitch ap
@@ -226,12 +238,17 @@ kSs :: [KNote] -> Int -> AbsKeyPitch -> Dur -> Music Pitch
 kSs pat n tr te = 
    transpose tr $ tempo te $ kSimToMusic $ kFringe n $ kSelfSim pat
 
+-- Test music
 km2 :: [KNote]
 km2 = [(((C,Major),0),dqn), (((C,Major),4), qn)]
 tkm2_9_5 = kSs km2 6 50 (1/50)
 
+-- Test code
+test_9_5 = play tkm2_9_5
+
 -- ===== Exercise 9.6 =====
--- Add volume to SNote
+-- Ex: Add volume to SNote
+
 type VNote     = (Dur,AbsPitch,Volume)
 data VCluster  = VCluster VNote [VCluster]
 
@@ -260,13 +277,17 @@ vss :: [VNote] -> Int -> AbsPitch -> Dur -> Music (Pitch, Volume)
 vss pat n tr te = 
    transpose tr $ tempo te $ vSimToMusic $ vFringe n $ vSelfSim pat
 
-vm2 :: [VNote]
-vm2 = [(dqn,0, 90), (qn,4, 100)]
-tvm2 = vss vm2 6 50 (1/50)
+-- Test music
+vm2_9_6 :: [VNote]
+vm2_9_6 = [(dqn,0, 90), (qn,4, 100)]
+tvm2_9_6 = vss vm2_9_6 6 50 (1/50)
+
+-- Test code
+test_9_6 = play tvm2_9_6  -- Test: Note the changing volume. 
 
 -- ===== Exercise 9.7 =====
--- Devise some other variant of self-similar music,
--- using structures different from those in selfSim.
+-- Ex: Devise some other variant of self-similar music,
+--     using structures different from those in selfSim.
 
 -- Idea (such as it is): Ascending and descending pitches with related endpoints.
 --   Consider the short melody
@@ -278,7 +299,6 @@ tvm2 = vss vm2 6 50 (1/50)
 --     interpolateM n x y = map ceiling [x, x + (y - x) / n) .. y]
 --   Similarly, interpolateM 10 [20, 80] => [20,26,32,38,44,50,56,62,68,74,80]
 
--- interRationals :: Rational -> Rational -> Rational -> [Rational]
 -- Avoid infinite lists by ensuring that the second element is greater than the first.
 interAbsPitches :: Int -> AbsPitch -> AbsPitch -> [AbsPitch]
 interAbsPitches n x y = [x, elem2 .. y]
@@ -298,28 +318,26 @@ polyLineNotes n absNotes d = gamuts
     where ranges = zip (init absNotes) (tail absNotes)
           gamuts = map (\(begin, end) -> interNotes n begin end d) ranges
 
-test_9_7 = chord $ procrusteanize $ lines
+-- Test music
+music_9_7 = chord $ procrusteanize $ lines
     where lines = map line $ polyLineNotes 10 [20, 30, 55, 40, 80, 55] en
 
+-- Test code
+test_9_7 = play music_9_7
+
 -- ===== Exercise 9.8 =====
--- Define a function that gives the same result as ss,
--- but without using a data type such as Cluster.
+-- Ex: Define a function that gives the same result as ss,
+--     but without using a data type such as Cluster.
+
 -- TODO
 
 -- ===== Exercise 9.9 =====
--- Entire melody level-to-level transformation
+-- Ex: Entire melody level-to-level transformation
 -- Possible ideas:
 --   * Permute pitches, while preserving durations.
 --   * Permute durations, while preserving pitches.
 --   * duplicate melody, while increasing tempo to preserve duration.
 --   * Rotate PitchClasses, while preserving Octaves.
-
--- Use the "truncating parallel composition" operator, (/=:).
-swapHalves :: Rational -> Music a -> Music a
-swapHalves rat mus = half2 :+: half1
-    where dur1 = rat * (dur mus)
-          half1 = takeM dur1 mus
-          half2 = dropM dur1 mus
 
 -- Functions defined in Chapter 6 of HSoM
 -- BEGIN
@@ -346,7 +364,14 @@ takeM d (Modify (Tempo r) m) = tempo r (takeM (d * r) m)
 takeM d (Modify c m)         = Modify c (takeM d m)
 -- END
 
--- Slice up a piece of music before re-joining it, like shuffling a deck of cards.
+-- Part 1: First draft: slice music into two pieces and swap them.  (Untested)
+swapHalves :: Rational -> Music a -> Music a
+swapHalves rat mus = half2 :+: half1
+    where dur1 = rat * (dur mus)
+          half1 = takeM dur1 mus
+          half2 = dropM dur1 mus
+
+-- Part 2: Slice music into many pieces.
 revMSlices :: [Rational] -> Music a -> [Music a]
 revMSlices durs mus = reverse slices
     where beginEnds =  zip (0.0 : durs) (durs ++ [1.0])
@@ -354,22 +379,21 @@ revMSlices durs mus = reverse slices
           slice (begin, end) mus = dropM begin $ takeM end mus
           slices = map (\be -> slice be mus) beginEnds
 
+-- Test music
 closeEncounters :: Music Pitch
 closeEncounters = line $ [g 3 qn, a 3 qn, f 3 qn, f 2 qn, c 3 hn]
 
 slicePoints :: [Rational]
 slicePoints = [0.25, 1/3.1415, 0.66]
 
-test_9_9_a :: Music Pitch
-test_9_9_a = line $ revMSlices slicePoints closeEncounters
--- play test_9_9_a
+music_9_9_a :: Music Pitch
+music_9_9_a = line $ revMSlices slicePoints closeEncounters
 
 nthIteration :: Int -> (a -> a) -> a -> a
 nthIteration n f xs = (iterate f xs) !! n
 
-test_9_9_b :: Music Pitch
-test_9_9_b = nthIteration 3 (line . revMSlices slicePoints) closeEncounters
--- play test_9_9_b
+music_9_9_b :: Music Pitch
+music_9_9_b = nthIteration 3 (line . revMSlices slicePoints) closeEncounters
 
 -- Apply a function to each slice.
 revModMSlices :: [Rational] -> (Music a -> Music a) -> Music a -> [Music a]
@@ -379,12 +403,10 @@ revModMSlices durs modF mus = reverse $ map modF slices
           slice (begin, end) mus = dropM begin $ takeM end mus
           slices = map (\be -> slice be mus) beginEnds
 
-test_9_9_b' :: Music Pitch
-test_9_9_b' = nthIteration 3 (line . revModMSlices slicePoints revM) closeEncounters
--- play test_9_9_b'
+music_9_9_c :: Music Pitch
+music_9_9_c = nthIteration 3 (line . revModMSlices slicePoints revM) closeEncounters
 
-test_9_9_b'' = test_9_9_b :=: test_9_9_b'
--- play test_9_9_b''
+music_9_9_d = music_9_9_b :=: music_9_9_c
 
 -- Also apply a function to the collection of slices.
 type MSliceMod a = Music a -> Music a
@@ -397,6 +419,13 @@ revModMSlices' durs sliceF sliceCollectionF mus = reverse $ sliceCollectionF $ m
           slice (begin, end) mus = dropM begin $ takeM end mus
           slices = map (\be -> slice be mus) beginEnds
 
-test_9_9_c = tempo (1/6) $ chord $ blender $ nthIteration 3 (line . blender) closeEncounters
-             where blender :: Music a -> [Music a]
-                   blender = revModMSlices' slicePoints revM procrusteanize
+music_9_9_e = tempo (1/6) $ chord $ blender $ nthIteration 3 (line . blender) closeEncounters
+                where blender :: Music a -> [Music a]
+                      blender = revModMSlices' slicePoints revM procrusteanize
+
+test_9_9_a = play music_9_9_a  -- Test: Close Encounters, sliced and reversed.
+test_9_9_b = play music_9_9_b  -- Test: Same, but with slice/reverse transformation applied 3x.
+test_9_9_c = play music_9_9_c  -- Test: Same as previous, but with revM applied to each slice.
+test_9_9_d = play music_9_9_d  -- Test: b & c, played concurrently.
+test_9_9_e = play music_9_9_e  -- Test: Apply function "procrusteanize" to entire collection,
+                               --       to adjust durations of slices.
