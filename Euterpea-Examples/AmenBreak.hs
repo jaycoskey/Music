@@ -1,5 +1,6 @@
 -- Amen Break.  Transcription into Euterpea by Jay Coskey
--- See https://breakbeatdrumming.wordpress.com/2009/01/31/the-amen-break/
+-- For a readable score, see https://en.wikipedia.org/wiki/Amen_break#Drumming_tabs_and_notation
+-- For accents, see https://breakbeatdrumming.wordpress.com/2009/01/31/the-amen-break/
 
 module AmenBreak where
 
