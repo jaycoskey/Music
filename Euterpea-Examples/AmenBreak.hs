@@ -1,4 +1,6 @@
--- Amen Break.  Transcription into Euterpea by Jay Coskey
+-- Amen Break, a drum solo from the song Amen Brother, by The Winstons.
+-- Originally played by Gregory Cylvester "G. C." Coleman.
+-- Transcription into Euterpea by Jay Coskey
 -- For a readable score, see https://en.wikipedia.org/wiki/Amen_break#Drumming_tabs_and_notation
 -- For accents, see https://breakbeatdrumming.wordpress.com/2009/01/31/the-amen-break/
 
@@ -42,14 +44,14 @@ bs2m percInstr (Beat { bDur=d, bVol=v, bAcc=a } : beats)
                         (1, 1) -> Modify (Phrase [Dyn (Accent 1.5)]) b0
 
 -- Beat and silence definitions (analog of notes & rests, for percussion)
-hns   = [Beat { bDur = hn, bVol = 0, bAcc = 0 }]
+hns   = [Beat { bDur = hn,  bVol = 0, bAcc = 0 }]
 
 qns   = [Beat { bDur = qn,  bVol = 0, bAcc = 0 }]
-qnb   = [Beat { bDur = qn,  bVol = 1, bAcc = 0 }]
-qnb'  = [Beat { bDur = qn,  bVol = 1, bAcc = 1 }]
+-- qnb   = [Beat { bDur = qn,  bVol = 1, bAcc = 0 }]
+-- qnb'  = [Beat { bDur = qn,  bVol = 1, bAcc = 1 }]
 
-dens  = [Beat { bDur = den, bVol = 0, bAcc = 0 }]
-denb  = [Beat { bDur = den, bVol = 1, bAcc = 0 }]
+--- dens  = [Beat { bDur = den, bVol = 0, bAcc = 0 }]
+-- denb  = [Beat { bDur = den, bVol = 1, bAcc = 0 }]
 denb' = [Beat { bDur = den, bVol = 1, bAcc = 1 }]
 
 ens   = [Beat { bDur = en,  bVol = 0, bAcc = 0 }]
@@ -58,7 +60,7 @@ enb'  = [Beat { bDur = en,  bVol = 1, bAcc = 1 }]
 
 sns   = [Beat { bDur = sn,  bVol = 0, bAcc = 0 }]
 snb   = [Beat { bDur = sn,  bVol = 1, bAcc = 0 }]
-snb'  = [Beat { bDur = sn,  bVol = 1, bAcc = 1 }]
+-- snb'  = [Beat { bDur = sn,  bVol = 1, bAcc = 1 }]
 
 -- Amen Break
 instrC = CrashCymbal1
