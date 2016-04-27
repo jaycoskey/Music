@@ -1,5 +1,6 @@
 -- module Music.Chord.Names where
 
+import Data.List
 import Data.List.Split
 
 import Euterpea
@@ -53,12 +54,12 @@ mivals ivalNames = map mival ivalNames
 mrchordIval :: ChordCode -> MIntervalName -> MRelChord
 mrchordIval chrdCode mivalName = (mrchord chrdCode) ++ [mival mivalName]
 
--- The chord "codes" below are taken from LilyPond docs (Appendix A.2)
+-- The chord "codes" below are taken from Lp docs (Appendix A.2)
 --   with the power chord codes being modified slightly.
 -- See http://lilypond.org/doc/v2.19/Documentation/notation/common-chord-modifiers
 --   * Errata on that web page:
---       - The LilyPond code for the 2-note power chord should read \powerChords c1:1.5
---       - The LilyPond code for the 3-note power chord should read \powerChords c1:1.5.8
+--       - The Lp code for the 2-note power chord should read \powerChords c1:1.5
+--       - The Lp code for the 3-note power chord should read \powerChords c1:1.5.8
 -- TODO: Refactor mrchord and mrchordName into concepts
 mrchord :: ChordCode -> MRelChord
 mrchord chordCode = case chordCode of
@@ -123,11 +124,15 @@ mrchordName name = case name of
     "pow1.5"   -> "Power chord (two-voiced)"
     "pow1.5.8" -> "Power chord (three-voiced)"
 
+mkChordAbsPitches :: Pitch -> ChordCode -> [AbsPitch]
+mkChordAbsPitches p code = aps
+    where ap0 = absPitch p
+          aps = ap0 : (map (ap0 +) (mrchord code))
+
 -- mkChord: Make a chord, using a ChordCode
 mkChord :: Dur -> Pitch -> ChordCode -> Music Pitch
 mkChord d p code = chord notes
-    where ap0 = absPitch p
-          aps = ap0 : (map (ap0 +) (mrchord code))
+    where aps = mkChordAbsPitches p code
           toNote ap = note d (pitch ap)
           notes = map toNote aps
 
@@ -135,7 +140,9 @@ mkChord d p code = chord notes
 -- mkChordRoman: Make a chord, using a Roman numeral
 -- mkChordRoman :: Dur -> MScale -> ChordRoman -> Music
 
--- Test code
+-- ========== ========== ========== ==========
+-- TEST CODE
+-- ========== ========== ========== ==========
 commonChordCodes
     = [ "5", "m5", "aug", "dim"
       , "7", "maj7", "m7", "dim7", "aug7", "m7.5-", "7+"
@@ -149,3 +156,149 @@ commonChordCodes
 
 mkChord_en_C4 = mkChord en (C,4)
 commonChords_en_C4 = line $ map mkChord_en_C4 commonChordCodes
+
+pbChord (pc, oct, cc) = mkChord qn (pc,oct) cc
+-- pachelbel = I-V-vi  -  iii-IV-I  -  IV-V-I
+pachelbel = line $ map pbChord [ (C,4,"5"),  (G,4,"5"), (A,4,"m5")
+                               , (E,4,"m5"), (F,4,"5"), (C,4,"5")
+                               , (F,4,"5"),  (G,4,"5"), (C,4,"5")
+                               ]
+
+-- ========== ========== ========== ==========
+-- LILYPOND SETUP
+-- ========== ========== ========== ==========
+lpHeader           = unlines
+    [ "\\version \"2.18.2\""
+    , "\\layout { indent = 0.0 }"
+    , "<<"
+    ]
+lpAbsoluteBegin    = unlines
+    [ "  \\absolute {"
+    ]
+lpKeyTempo         = unlines
+    [ "    \\key c \\major"
+    , "    \\time 4/4"
+    ]
+lpChordmodeBegin   = unlines
+    [ "    \\chordmode {\n"
+    ]
+lpChordList        = unlines
+    [ "c1:5         c1:m5        c1:aug"
+    , "c1:dim       c1:7         c1:maj7      c1:m7"
+    , "c1:dim7      c1:aug7      c1:m7.5-     c1:7+"
+    , "c1:6         c1:m6        c1:9         c1:maj9"
+    , "c1:m9        c1:11        c1:maj11     c1:m11"
+    , "c1:13        c1:13.11     c1:maj13.11  c1:m13.11"
+    , "c1:sus2      c1:sus4"
+    , "\\powerChords c1:1.5"
+    , "\\powerChords c1:1.5.8"
+    ]
+lpChordmodeEnd     = "    }\n"
+lpAbsoluteEnd      = unlines
+    [ "  }"
+    ]
+lpAddLyrics        = unlines
+    [ "  \\addlyrics {"
+    ]
+lpChordCodeList = unlines
+    [ "  \"5\"     \"m5\"     \"m\"         \"aug\""
+    , "  \"dim\"   \"7\"      \"maj7\"      \"m7\""
+    , "  \"dim7\"  \"aug7\"   \"m7.5-\"     \"7+\""
+    , "  \"6\"     \"m6\"     \"9\"         \"maj9\""
+    , "  \"m9\"    \"11\"     \"maj11\"     \"m11\""
+    , "  \"13\"    \"13.11\"  \"maj13.11\"  \"m13.11\""
+    , "  \"sus2\"  \"sus4\"   \"pow1.5\"    \"pow1.5.8\""
+    ]
+lpOutputFooter     = unlines
+    [ "  }"
+    , ">>"
+    , "\\layout { }"
+    ]
+
+lpOutputReference
+    = lpHeader
+      ++ lpAbsoluteBegin
+      ++ lpKeyTempo
+      ++ lpChordmodeBegin
+      ++ lpChordList
+      ++ lpChordmodeEnd
+      ++ lpAbsoluteEnd
+      ++ lpAddLyrics
+      ++ lpChordCodeList
+      ++ lpOutputFooter
+
+-- ========== ========== ========== ==========
+-- LILYPOND TEST #1
+-- ========== ========== ========== ==========
+chordCode2Input :: ChordCode -> String
+chordCode2Input "pow1.5"   = "\\powerChords_c1:1.5"
+chordCode2Input "pow1.5.8" = "\\powerChords_c1:1.5.8"
+chordCode2Input code       = "c1:" ++ code
+
+prefixWithNote s = "c1:" ++ s ++ " "
+indent3        s = "      " ++ s
+lpChordListTest1
+    = map (\c -> if c == '_' then ' '; else c) $ unlines groupsOf4
+        where rootedChordCodes = map chordCode2Input commonChordCodes
+              -- TODO?: Replace unwords with something with event spacing.
+              groupsOf4 = map (indent3 . unwords) $ chunksOf 4 rootedChordCodes
+
+quotify        s = "\"" ++ s ++ "\" "
+indent2        s = "    " ++ s
+lpChordCodeListTest1
+    = unlines groupsOf4
+        where chordCodes = map quotify commonChordCodes
+              groupsOf4  = map (indent2 . concat) $ chunksOf 4 chordCodes
+
+lpOutputTest1
+    = lpHeader
+      ++ lpAbsoluteBegin
+      ++ lpKeyTempo
+      ++ lpChordmodeBegin
+      ++ lpChordListTest1
+      ++ lpChordmodeEnd
+      ++ lpAbsoluteEnd
+      ++ lpAddLyrics
+      ++ lpChordCodeListTest1
+      ++ lpOutputFooter
+
+-- ========== ========== ========== ==========
+-- LILYPOND TEST #2
+-- ========== ========== ========== ==========
+absPitch2LpNote :: Octave -> AbsPitch -> String
+absPitch2LpNote baseOct ap = lpNote ++ lpOct
+    where ptch = pitch ap
+          pc   = fst ptch
+          oct  = snd ptch
+          lpNote = case pc of
+              C -> "c"; Cs -> "cis"; D -> "d"; Ds -> "dis"
+              E -> "e";              F -> "f"; Fs -> "fis"
+              G -> "g"; Gs -> "gis"; A -> "a"; As -> "ais"
+              B -> "b"
+          lpOct = replicate (oct - baseOct) '\''  -- Assumes oct >= baseOct
+
+-- These yield the correct frequencies, but display all non-scale notes as sharps.
+absPitches2LpChord :: Octave -> [AbsPitch] -> String
+absPitches2LpChord baseOct aps = "<" ++ notes ++ ">1"
+    where notes = intercalate " " $ map (absPitch2LpNote baseOct) aps
+
+mkChordAbsPitches_C4 = mkChordAbsPitches (C, 4)
+
+lpChordListTest2 = unlines chords2
+    where chords  = map (indent3 . (absPitches2LpChord 3) . mkChordAbsPitches_C4) commonChordCodes
+          chords2 = map (intercalate "") $ chunksOf 2 chords
+
+lpChordCodeListTest2
+    = lpChordCodeListTest1
+
+lpOutputTest2
+    = lpHeader
+      ++ lpAbsoluteBegin
+      ++ lpKeyTempo
+      -- ++ lpChordmodeBegin
+      ++ lpChordListTest2
+      -- ++ lpChordmodeEnd
+      ++ lpAbsoluteEnd
+      ++ lpAddLyrics
+      ++ lpChordCodeListTest2
+      ++ lpOutputFooter
