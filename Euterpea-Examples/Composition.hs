@@ -2,7 +2,10 @@
 module Composition where
 
 import Data.List
+
 import Euterpea
+
+import LilyPond
 
 type Durs    = [Dur]
 type Pitches = [Pitch]
@@ -17,6 +20,8 @@ mzipN durs pitches = zipWith note durs pitches
 -- End result is a [M]usic value.
 mzipM :: Durs -> Pitches -> Music Pitch
 mzipM durs pitches = line $ mzipN durs pitches
+
+playMelody durs pitches = play $ mzipM durs pitches
 
 -- Test music
 durs1      = [en,   en,   den,  sn,   den,  sn,   en,   en,   qn   ]
@@ -56,40 +61,5 @@ m1r    = addVolume 50  $ instrument instr1 mzip1
 m2r    = addVolume 110 $ instrument instr2 mzip2
 m3r    = addVolume 127 $ instrument instr3 mzip3
 
-absPitch2LpNote :: Octave -> AbsPitch -> String
-absPitch2LpNote baseOct ap = lpNote ++ lpOct
-    where ptch = pitch ap
-          pc   = fst ptch
-          oct  = snd ptch
-          lpNote = case pc of
-              C -> "c"; Cs -> "cis"; D -> "d"; Ds -> "dis"
-              E -> "e";              F -> "f"; Fs -> "fis"
-              G -> "g"; Gs -> "gis"; A -> "a"; As -> "ais"
-              B -> "b"
-          lpOct = replicate (oct - baseOct) '\''  -- Assumes oct >= baseOct
-
-durNotation :: Dur -> String
-durNotation dur
-    | dur == wn    = "1"
-    |   dur == dwn = "1."
-    | dur == hn    = "2"
-    |   dur == dhn = "2."
-    | dur == qn    = "4"
-    |   dur == dqn = "4."
-    | dur == en    = "8"
-    |   dur == den = "8."
-    | dur == sn    = "16"
-    |   dur == dsn = "16."
-    | otherwise    = error "unsupported duration: " ++ (show dur)
-
--- These yield the correct frequencies,
---     but use only sharps---never flats.
-absPitches2LpChord :: Octave -> Dur -> [AbsPitch] -> String
-absPitches2LpChord baseOct d aps = "<" ++ notes ++ ">" ++ durStr
-    where notes  = intercalate " " $ map (absPitch2LpNote baseOct) aps
-          durStr = durNotation d
-
-durAbsPitch2LpNote :: Octave -> Dur -> AbsPitch -> String
-durAbsPitch2LpNote baseOct d ap = noteName ++ durStr
-    where noteName = absPitch2LpNote baseOct ap
-          durStr   = durNotation d
+-- Test Code
+lp1 = lpFileFromMelody "Piano" "4/4" $ zip durs1 pitches1
