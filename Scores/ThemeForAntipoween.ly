@@ -45,13 +45,18 @@ left = \absolute {
         r4 hh4 r4 cl4
         r4 hh4 r4 cl4
         r4 hh4 r4 cl4
-        r4 hh8. cl16 r2
+        r4 hh8 cl16 cl16
+            cymra4 hh8 cl16 cl16
 
-        hh8 hh16 hh16 r8 cl16 cl16 
-                         hh8 hh16 hh16 r8 cl16 cl16
-        r4 hh8. cl16     cymra4  r4
-        hh8. cl16 r4     cl4  r4
-        hh4. cl16 cl16   hh8  hh8 hh16 hh16 hh16 cymra16~cymra1
+        hh16 hh16 hh16 r16
+            cl16 cl16 cl16 r16
+                         hh16 hh16 hh16 r16
+                             cl16 cl16 cl16 r16
+        r4 hh8 cl16 cl16 cymra4  r4
+        hh8 cl16 cl16 r4 cl4  r4
+        hh8 hh8 cymra8 cl16 cl16
+                         hh16 hh16 hh16 cl16
+                             hh16 hh16 hh16 cymra16~cymra1
       }
     }
   >>
