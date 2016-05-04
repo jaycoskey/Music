@@ -159,8 +159,14 @@ mkScaleIntervals sm = case sm of
     ScaleBluesMajor      -> [2, 3, 2, 2, 3]
     ScaleBluesMinor      -> [3, 2, 3, 2, 2]
 
-mkAbsPitchesR :: Pitch -> ScaleMode -> RomanNumeral -> [Int]
-mkAbsPitchesR p sm roman = aps
+mkScaleMusic :: Dur -> Pitch -> ScaleMode -> Music Pitch
+mkScaleMusic d p sm = line notes
+    where scaleIntervals = mkScaleIntervals sm
+          scale = scanl (+) (absPitch p) scaleIntervals
+          notes = mkNotesFromAbsPitches d scale
+
+mkChordAbsPitchesR :: Pitch -> ScaleMode -> RomanNumeral -> [Int]
+mkChordAbsPitchesR p sm roman = aps
     where scaleIntervals = mkScaleIntervals sm
           scale = scanl (+) (absPitch p) scaleIntervals
           (apBase, code) = case roman of
@@ -175,7 +181,7 @@ mkAbsPitchesR p sm roman = aps
 
 mkChordR :: Dur -> Pitch -> ScaleMode -> RomanNumeral -> Music Pitch
 mkChordR d p sm roman = chord notes
-    where aps       = mkAbsPitchesR         p sm roman
+    where aps       = mkChordAbsPitchesR         p sm roman
           notes     = mkNotesFromAbsPitches d aps
 
 -- Example of string argument: "I-V-vi-iii-IV-I-IV-V-I"
@@ -198,6 +204,10 @@ commonChordCodes
 -- ========== ========== ========== ==========
 -- TEST CODE
 -- ========== ========== ========== ==========
+c4MajorScale = mkScaleMusic qn (C,4) ScaleMajor
+c4MinorScale = mkScaleMusic qn (C,4) ScaleMinor
+c4MajorMinorScale  = c4MajorScale :=: c4MinorScale
+
 mkChord_en_C4 = mkChord en (C,4)
 commonChords_en_C4 = line $ map mkChord_en_C4 commonChordCodes
 
@@ -209,3 +219,6 @@ pachelbelC = line $ map pbChord [ (C,4,"5"),  (G,4,"5"), (A,4,"m5")
                                 ]
 
 pachelbelS = mkChordS qn (C,4) ScaleMajor "I-V-vi-iii-IV-I-IV-V-I"
+pachelbelS_wrong = mkChordS qn (C,4) ScaleMajor "I-V-vi-ii-IV-I-IV-V-I"
+pachelbelS_both = pachelbelS :=: pachelbelS_wrong
+
