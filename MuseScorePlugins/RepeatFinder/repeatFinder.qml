@@ -1,4 +1,42 @@
+// import Qt.labs.calendar
+// import Qt.labs.controls
+import Qt.labs.folderlistmodel 2.1
+import Qt.labs.settings 1.0
+// import Qt.labs.templates
+
+// import Qt3D.Core
+// import Qt3D.Input
+// import Qt3D.Logic
+// import Qt3D.Render
+
+// import QtAudioEngine
+// Not present: import QtBluetooth
+// import QtCanvas3D
+// import QtGraphicalEffects
+// Not present: import QtLocation
+// import QtMultimedia
+// Not present: import QtNfc
+// Not present: import QtPositioning
+import QtQml 2.2 
+// Not present: import QtQml.Models
 import QtQuick 2.0
+import QtQuick.Controls 1.1
+// Not present: import QtQuick.Controls.Styles
+import QtQuick.Dialogs 1.2
+// import QtQuick.Extras
+import QtQuick.Layouts 1.1
+// Version?: import QtQuick.LocalStorage
+// Not present: import QtQuick.Particles
+import QtQuick.Window 2.2
+// Version?: import QtQuick.XmlListModel
+// import QtSensors
+// import QtTest
+// import QtWebSockets
+// import QtWebView
+// Not present: import QtWinExtras
+
+import FileIO 1.0
+
 import MuseScore 1.0
 
 // Find duplicate phrases within a piece of music.
@@ -9,11 +47,11 @@ MuseScore {
     description:   "Find repeated musical phrases"
     // requiresScore: true
 
-    pluginType:    "dialog" // vs. dock
-    // dockArea:      "left"
+    pluginType:    "dock" // vs. dialog
+    dockArea:      "bottom"
 
-    width:  150
-    height: 75
+    width:  1600
+    height: 1000
 
     onRun: {
         console.log(qsTr("Repeat Finder"));
@@ -21,71 +59,153 @@ MuseScore {
             Qt.quit();
     }
 
-    Rectangle {
-        color: "white"
-        anchors.fill: parent
+    Layout.fillWidth: true
+    ColumnLayout {
+        GroupBox {
+            Layout.fillWidth: true
+            Text {
+                anchors.centerIn: parent 
+                text: qsTr("Find repeated musical phrases")
+                horizontalAlignment: Text.AlignHCenter
+                width: 800
+            }
+        }
+        GroupBox {
+            id: instrumentGroup
+            Layout.fillWidth: true
+            // ExclusiveGroup { id: instrumentSelectionGroup }
+            RowLayout { 
+                Text {
+                    text: qsTr("Instruments:")
+                    Layout.minimumWidth: 80
+                } 
+                RadioButton {
+                    text: "All instruments"
+                    x: 1000
+                    checked: true
+                    Layout.minimumWidth: 160
+                    // exclusiveGroup: instrumentSelectionGroup
+                }
+                RadioButton {
+                    text: "Select instruments"
+                    // exclusiveGroup: instrumentSelectionGroup
+                }
+            }
+        } // GroupBox
 
-        Text {
-            anchors.centerIn: parent
-            text: qsTr("Phrase Finder")
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: Qt.quit()
-        }
-    }
+        GroupBox {
+            id: barGroup
+            Layout.fillWidth: true
+            // ExclusiveGroup { id: barSearchGroup }
+            RowLayout {
+                Text {
+                    text: qsTr("Bars:")
+                    Layout.minimumWidth: 80
+                }
+                RadioButton {
+                    text: "Search all bars"
+                    checked: true
+                    Layout.minimumWidth: 160
+                    // exclusiveGroup: barSearchGroup
+                }
+                RadioButton {
+                    text: "Select range"
+                    // exclusiveGroup: barSearchGroup
+                }
+            }
+        } // GroupBox
+
+        GroupBox {
+            id: phraseDurationGroup
+            Layout.fillWidth: true
+            RowLayout {
+                Text {
+                    id: phraseDurationLabel
+                    text: "Phrase duration: "
+                    Layout.minimumWidth: 80
+                }
+                Label {
+                    text: qsTr("Min duration:")
+                    Layout.minimumWidth: 60
+                }
+                SpinBox {
+                    id: minDuration
+                    minimumValue: 0
+                    maximumValue: 10000000
+                    value: 0
+                    stepSize: 1
+                    Layout.minimumWidth: 60
+                }
+                Label {
+                    text: qsTr("")
+                    Layout.minimumWidth: 20
+                }
+
+                Label {
+                    text: qsTr("Max duration:")
+                }
+                SpinBox {
+                    id: maxDuration
+                    minimumValue: 0
+                    maximumValue: 10000000
+                    value: 9999
+                    stepSize: 1
+                }
+            }
+        } // GroupBox
+
+        GroupBox {
+            id: accidentalGroup
+            Layout.fillWidth: true
+            // ExclusiveGroup { id: accidentalEqualityGroup }
+            RowLayout {
+                Text {
+                    text: qsTr("Accidentals:")
+                    Layout.minimumWidth: 80
+                }
+                RadioButton {
+                    text: qsTr("Use accientals")
+                    checked: true
+                    Layout.minimumWidth: 160
+                    // exclusiveGroup: accidentalEqualityGroup
+                }
+                RadioButton {
+                    text: "Ignore accidentals"
+                    // exclusiveGroup: accidentalEqualityGroup
+                }
+            }
+        } // GroupBox
+
+        GroupBox {
+            id: enharmonicGroup
+            Layout.fillWidth: true
+            // ExclusiveGroup { id: enharmonicEqualityGroup }
+            RowLayout {
+                Text {
+                    text: qsTr("Enharmonics:")
+                    Layout.minimumWidth: 80
+                }
+                RadioButton {
+                    text: "Treat enharmonics as equal"
+                    checked: true
+                    Layout.minimumWidth: 160
+                    // exclusiveGroup: enharmonicEqualityGroup
+                }
+                RadioButton {
+                    text: "Treat enharmonics as distinct"
+                    // exclusiveGroup: enharmonicEqualityGroup
+                }
+            }
+        } // GroupBox
+
+        GroupBox {
+            Layout.fillWidth: true
+            Button {
+                id: findRepeats
+                text: qsTr("Find Repeats") 
+                width: 400
+                onClicked: Qt.quit() 
+            } // Button
+        } // Rectangle
+    } // ColumnLayout
 }
-
-
-//    GroupBox {
-//        id: instrumentGroup
-//        title: qsTr("Instruments")
-//        Layout.fillWidth: true
-//        Column {
-//            // ExclusiveGroup { id: instrumentSelectionGroup }
-//            RadioButton {
-//                text: "All instruments"
-//                checked: true
-//                // exclusiveGroup: instrumentSelectionGroup
-//            }
-//            RadioButton {
-//                text: "Select instruments"
-//                // exclusiveGroup: instrumentSelectionGroup
-//            }
-//        }
-//    }
-
-
-//        GroupBox {
-//            // title: "Bars"
-//            ExclusiveGroup { id: barSearchGroup }
-//            RowLayout {
-//                text: "Search all bars"
-//                checked: true
-//                exclusiveGroup: barSearchGroup
-//            }
-//            RowLayout {
-//                text: "Select range"
-//                exclusiveGroup: barSearchGroup
-//            }
-//        }
-
-
-//        GroupBox {
-//            // title: "Phrase Duration"
-//            // ExclusiveGroup { id: phraseDurationGroup }
-//            ColumnLayout {
-//                text: "Min duration (bars)"
-//                SpinBox {
-//                    id: minDuration
-//                }
-//                // exclusiveGroup: phraseDurationGroup
-//            }
-//            ColumnLayout {
-//                text: "Max duration (bars)"
-//                SpinBox {
-//                    id: maxDuration
-//                }
-//                // exclusiveGroup: phraseDurationGroup
-//            }
-//        }
