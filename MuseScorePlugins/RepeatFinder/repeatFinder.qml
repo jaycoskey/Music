@@ -50,8 +50,9 @@ MuseScore {
     pluginType:    "dock" // vs. dialog
     dockArea:      "bottom"
 
-    width:  1600
-    height: 1000
+    anchors.fill: parent
+    // width:  1600
+    // height: 1000
 
     onRun: {
         console.log(qsTr("Repeat Finder"));
@@ -70,51 +71,11 @@ MuseScore {
                 width: 800
             }
         }
-        GroupBox {
-            id: instrumentGroup
-            Layout.fillWidth: true
-            // ExclusiveGroup { id: instrumentSelectionGroup }
-            ColumnLayout {
-                RowLayout { 
-                    Text {
-                        text: qsTr("Instruments:")
-                        Layout.minimumWidth: 80
-                    } 
-                    RadioButton {
-                        text: "All instruments"
-                        x: 1000
-                        checked: true
-                        Layout.minimumWidth: 160
-                        // exclusiveGroup: instrumentSelectionGroup
-                    }
-                    RadioButton {
-                        text: "Select instruments"
-                        // exclusiveGroup: instrumentSelectionGroup
-                    }
-                }
-                RowLayout { 
-                    Text {
-                        text: qsTr("")
-                        Layout.minimumWidth: 285
-                    }
-                    ColumnLayout {
-                        CheckBox {
-                            id: instr_Foo
-                            text: "Foo"
-                        }
-                        CheckBox {
-                            id: instr_Bar
-                            text: "Bar"
-                        }
-                    }
-                }
-            }
-        } // GroupBox
 
         GroupBox {
             id: barGroup
             Layout.fillWidth: true
-            // ExclusiveGroup { id: barSearchGroup }
+            ExclusiveGroup { id: barSearchGroup }
             ColumnLayout {
                 RowLayout {
                     Text {
@@ -125,14 +86,34 @@ MuseScore {
                         text: "Search all bars"
                         checked: true
                         Layout.minimumWidth: 160
-                        // exclusiveGroup: barSearchGroup
+                        onClicked:
+                        {
+                            barRange.visible = false
+                            barRangeSpacer.visible = true
+                        }
+                        exclusiveGroup: barSearchGroup
                     }
                     RadioButton {
                         text: "Select range"
-                        // exclusiveGroup: barSearchGroup
+                        onClicked:
+                        {
+                            barRange.visible = true 
+                            barRangeSpacer.visible = false
+                        }
+                        exclusiveGroup: barSearchGroup
                     }
                 }
                 RowLayout {
+                    id: barRangeSpacer
+                    visible: true
+                    Text {
+                        text: qsTr("")
+                        Layout.minimumWidth: 550
+                    }
+                }
+                RowLayout {
+                    id: barRange
+                    visible: false
                     Text {
                         text: qsTr("")
                         Layout.minimumWidth: 285
@@ -163,8 +144,8 @@ MuseScore {
                         value: 9999
                         stepSize: 1
                     }
-                }
-            }
+                } // RowLayout
+            } // ColumnLayout
         } // GroupBox
 
         GroupBox {
@@ -190,9 +171,8 @@ MuseScore {
                 }
                 Label {
                     text: qsTr("")
-                    Layout.minimumWidth: 20
+                    Layout.minimumWidth: 5
                 }
-
                 Label {
                     text: qsTr("Max duration:")
                 }
@@ -203,35 +183,35 @@ MuseScore {
                     value: 9999
                     stepSize: 1
                 }
-            }
+            } // RowLayout
         } // GroupBox
 
         GroupBox {
             id: accidentalGroup
             Layout.fillWidth: true
-            // ExclusiveGroup { id: accidentalEqualityGroup }
+            ExclusiveGroup { id: accidentalEqualityGroup }
             RowLayout {
                 Text {
                     text: qsTr("Accidentals:")
                     Layout.minimumWidth: 80
                 }
                 RadioButton {
-                    text: qsTr("Use accientals")
+                    text: qsTr("Include accientals")
                     checked: true
                     Layout.minimumWidth: 160
-                    // exclusiveGroup: accidentalEqualityGroup
+                    exclusiveGroup: accidentalEqualityGroup
                 }
                 RadioButton {
                     text: "Ignore accidentals"
-                    // exclusiveGroup: accidentalEqualityGroup
+                    exclusiveGroup: accidentalEqualityGroup
                 }
-            }
+            } // RowLayout
         } // GroupBox
 
         GroupBox {
             id: enharmonicGroup
             Layout.fillWidth: true
-            // ExclusiveGroup { id: enharmonicEqualityGroup }
+            ExclusiveGroup { id: enharmonicEqualityGroup }
             RowLayout {
                 Text {
                     text: qsTr("Enharmonics:")
@@ -241,13 +221,100 @@ MuseScore {
                     text: "Treat enharmonics as equal"
                     checked: true
                     Layout.minimumWidth: 160
-                    // exclusiveGroup: enharmonicEqualityGroup
+                    exclusiveGroup: enharmonicEqualityGroup
                 }
                 RadioButton {
                     text: "Treat enharmonics as distinct"
-                    // exclusiveGroup: enharmonicEqualityGroup
+                    exclusiveGroup: enharmonicEqualityGroup
                 }
-            }
+            } // RowLayout
+        } // GroupBox
+
+        GroupBox {
+            ExclusiveGroup { id: instrumentSelectionGroup }
+            ColumnLayout {
+                RowLayout { 
+                    Text {
+                        text: qsTr("Instruments:")
+                        Layout.minimumWidth: 80
+                    } 
+                    RadioButton {
+                        text: "Include all instruments"
+                        x: 1000
+                        checked: true
+                        Layout.minimumWidth: 160
+                        onClicked:
+                        {
+                            instrumentList.visible = false
+                            instrumentListSpacer.visible = true
+                        }
+                        exclusiveGroup: instrumentSelectionGroup
+                    }
+                    RadioButton {
+                        text: "Include select instruments"
+                        onClicked:
+                        {
+                            {
+                                instrumentModel.clear()
+                                console.log("Current score has " + curScore.parts.length + " parts")
+                                for(var i = 0; i < curScore.parts.length; i++) {
+                                    try {
+                                        var part = curScore.parts[i];
+                                        var instrumentId = part.instrumentId;
+                                        // var partName = part.partName;
+                                        // var partKnownTest = new RegExp("[^\?]");
+                                        // var isPartKnown = partKnownTest.exec(partName);
+                                        var name = /* isPartKnown ? partName : */ instrumentId;
+                                        console.log("Instrument #" + i + " is " + name)
+                                        instrumentModel.append({"name": name});
+                                    }
+                                    catch(e) {
+                                        console.log("Instrument #" + i + " is unknown: " + e.message)
+                                        // namelessPartList += i;
+                                    }
+                                }
+                            }
+                            instrumentList.height = 13 * curScore.parts.length;
+                            instrumentList.visible = true
+                            instrumentListSpacer.visible = true
+                            instrumentListSpacer.visible = false
+                        }
+                        exclusiveGroup: instrumentSelectionGroup
+                    }
+                }
+                RowLayout {
+                    id: instrumentListSpacer
+                    visible: true
+                    height: 1
+                    Text {
+                        text: qsTr(" ")
+                        Layout.minimumWidth: 550
+                    }
+                }
+
+                RowLayout { 
+                    id: instrumentList
+                    visible: false
+                    Column {
+                        Text {
+                            text: qsTr("")
+                            Layout.minimumWidth: 285
+                        }
+                    }
+                    Column {
+                        anchors.fill: parent
+                        ListView {
+                            id: instrumentListView
+                            anchors.fill: parent
+                            model: instrumentModel
+                            delegate: Text { text: name }
+                        }
+                    }
+                    ListModel {
+                        id: instrumentModel
+                    }
+                } // RowLayout
+            } // ColumnLayout
         } // GroupBox
 
         GroupBox {
@@ -258,6 +325,6 @@ MuseScore {
                 width: 550
                 onClicked: Qt.quit() 
             } // Button
-        } // Rectangle
+        } // GroupBox
     } // ColumnLayout
 }
