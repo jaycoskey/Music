@@ -247,37 +247,38 @@ MuseScore {
                         onClicked:
                         {
                             instrumentList.visible = false
-                            // instrumentListSpacer.visible = true
+                            instrumentListSpacer.visible = true
                         }
                         exclusiveGroup: instrumentSelectionGroup
                     }
                     RadioButton {
                         text: "Include select instruments"
-                        onClicked:
-                        {
-                            {
-                                instrumentModel.clear()
-                                console.log("Current score has " + curScore.parts.length + " parts")
-                                for(var i = 0; i < curScore.parts.length; i++) {
-                                    try {
-                                        var part = curScore.parts[i];
-                                        var instrumentId = part.instrumentId;
-                                        // var partName = part.partName;
-                                        // var partKnownTest = new RegExp("[^\?]");
-                                        // var isPartKnown = partKnownTest.exec(partName);
-                                        var name = /* isPartKnown ? partName : */ instrumentId;
-                                        console.log("Instrument #" + i + " is " + name)
-                                        instrumentModel.append({"name": name});
-                                    }
-                                    catch(e) {
-                                        console.log("Instrument #" + i + " is unknown: " + e.message)
-                                        // namelessPartList += i;
-                                    }
+                        function populateInstrumentList() {
+                            instrumentModel.clear()
+                            console.log("Current score has " + curScore.parts.length + " parts")
+                            for(var i = 0; i < curScore.parts.length; i++) {
+                                try {
+                                    var part = curScore.parts[i];
+                                    var instrumentId = part.instrumentId;
+                                    // var partName = part.partName;
+                                    // var partKnownTest = new RegExp("[^\?]");
+                                    // var isPartKnown = partKnownTest.exec(partName);
+                                    var name = /* isPartKnown ? partName : */ instrumentId;
+                                    console.log("Instrument #" + i + " is " + name)
+                                    instrumentModel.append({"name": name});
+                                }
+                                catch(e) {
+                                    console.log("Instrument #" + i + " is unknown: " + e.message)
+                                    // namelessPartList += i;
                                 }
                             }
+                        }
+                        onClicked:
+                        {
+                            populateInstrumentList();
                             instrumentList.height = 13 * curScore.parts.length;
-                            instrumentList.visible = true
-                            // instrumentListSpacer.visible = false
+                            instrumentList.visible = true;
+                            instrumentListSpacer.visible = false;
                         }
                         exclusiveGroup: instrumentSelectionGroup
                     }
@@ -298,6 +299,7 @@ MuseScore {
                     Rectangle {
                         anchors.fill: parent
                         anchors.leftMargin: 285
+                        Layout.minimumWidth: 550
                         ListView {
                             id: instrumentListView
                             anchors.fill: parent
