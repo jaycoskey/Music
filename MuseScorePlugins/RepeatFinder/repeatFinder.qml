@@ -74,21 +74,39 @@ MuseScore {
             id: instrumentGroup
             Layout.fillWidth: true
             // ExclusiveGroup { id: instrumentSelectionGroup }
-            RowLayout { 
-                Text {
-                    text: qsTr("Instruments:")
-                    Layout.minimumWidth: 80
-                } 
-                RadioButton {
-                    text: "All instruments"
-                    x: 1000
-                    checked: true
-                    Layout.minimumWidth: 160
-                    // exclusiveGroup: instrumentSelectionGroup
+            ColumnLayout {
+                RowLayout { 
+                    Text {
+                        text: qsTr("Instruments:")
+                        Layout.minimumWidth: 80
+                    } 
+                    RadioButton {
+                        text: "All instruments"
+                        x: 1000
+                        checked: true
+                        Layout.minimumWidth: 160
+                        // exclusiveGroup: instrumentSelectionGroup
+                    }
+                    RadioButton {
+                        text: "Select instruments"
+                        // exclusiveGroup: instrumentSelectionGroup
+                    }
                 }
-                RadioButton {
-                    text: "Select instruments"
-                    // exclusiveGroup: instrumentSelectionGroup
+                RowLayout { 
+                    Text {
+                        text: qsTr("")
+                        Layout.minimumWidth: 285
+                    }
+                    ColumnLayout {
+                        CheckBox {
+                            id: instr_Foo
+                            text: "Foo"
+                        }
+                        CheckBox {
+                            id: instr_Bar
+                            text: "Bar"
+                        }
+                    }
                 }
             }
         } // GroupBox
@@ -97,20 +115,54 @@ MuseScore {
             id: barGroup
             Layout.fillWidth: true
             // ExclusiveGroup { id: barSearchGroup }
-            RowLayout {
-                Text {
-                    text: qsTr("Bars:")
-                    Layout.minimumWidth: 80
+            ColumnLayout {
+                RowLayout {
+                    Text {
+                        text: qsTr("Bars:")
+                        Layout.minimumWidth: 80
+                    }
+                    RadioButton {
+                        text: "Search all bars"
+                        checked: true
+                        Layout.minimumWidth: 160
+                        // exclusiveGroup: barSearchGroup
+                    }
+                    RadioButton {
+                        text: "Select range"
+                        // exclusiveGroup: barSearchGroup
+                    }
                 }
-                RadioButton {
-                    text: "Search all bars"
-                    checked: true
-                    Layout.minimumWidth: 160
-                    // exclusiveGroup: barSearchGroup
-                }
-                RadioButton {
-                    text: "Select range"
-                    // exclusiveGroup: barSearchGroup
+                RowLayout {
+                    Text {
+                        text: qsTr("")
+                        Layout.minimumWidth: 285
+                    }
+                    Label {
+                        text: qsTr("From bar #")
+                        Layout.minimumWidth: 60
+                    }
+                    SpinBox {
+                        id: fromBarNum
+                        minimumValue: 0
+                        maximumValue: 10000000
+                        value: 0
+                        stepSize: 1
+                        Layout.minimumWidth: 60
+                    }
+                    Label {
+                        text: qsTr("")
+                        Layout.minimumWidth: 5
+                    }
+                    Label {
+                        text: qsTr("To bar #")
+                    }
+                    SpinBox {
+                        id: toBarNum
+                        minimumValue: 0
+                        maximumValue: 10000000
+                        value: 9999
+                        stepSize: 1
+                    }
                 }
             }
         } // GroupBox
@@ -203,7 +255,7 @@ MuseScore {
             Button {
                 id: findRepeats
                 text: qsTr("Find Repeats") 
-                width: 400
+                width: 550
                 onClicked: Qt.quit() 
             } // Button
         } // Rectangle
