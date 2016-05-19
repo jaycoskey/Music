@@ -231,6 +231,7 @@ MuseScore {
         } // GroupBox
 
         GroupBox {
+            // Layout.fillWidth: true
             ExclusiveGroup { id: instrumentSelectionGroup }
             ColumnLayout {
                 RowLayout { 
@@ -246,7 +247,7 @@ MuseScore {
                         onClicked:
                         {
                             instrumentList.visible = false
-                            instrumentListSpacer.visible = true
+                            // instrumentListSpacer.visible = true
                         }
                         exclusiveGroup: instrumentSelectionGroup
                     }
@@ -276,8 +277,7 @@ MuseScore {
                             }
                             instrumentList.height = 13 * curScore.parts.length;
                             instrumentList.visible = true
-                            instrumentListSpacer.visible = true
-                            instrumentListSpacer.visible = false
+                            // instrumentListSpacer.visible = false
                         }
                         exclusiveGroup: instrumentSelectionGroup
                     }
@@ -295,18 +295,14 @@ MuseScore {
                 RowLayout { 
                     id: instrumentList
                     visible: false
-                    Column {
-                        Text {
-                            text: qsTr("")
-                            Layout.minimumWidth: 285
-                        }
-                    }
-                    Column {
+                    Rectangle {
                         anchors.fill: parent
+                        anchors.leftMargin: 285
                         ListView {
                             id: instrumentListView
                             anchors.fill: parent
                             model: instrumentModel
+                            // delegate: Row { Text { text: name }}
                             delegate: Text { text: name }
                         }
                     }
