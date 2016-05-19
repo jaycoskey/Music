@@ -304,8 +304,40 @@ MuseScore {
                             id: instrumentListView
                             anchors.fill: parent
                             model: instrumentModel
-                            // delegate: Row { Text { text: name }}
-                            delegate: Text { text: name }
+                            highlight: Rectangle {
+                                color:   "black"
+                                radius:  5
+                                opacity: 0.7
+                                focus:   true 
+                            }
+                            // currentIndex: instrumentList.current
+                            preferredHighlightBegin: 80; preferredHighlightEnd: 220
+                            highlightRangeMode: ListView.ApplyRange
+                            delegate:
+                                Item {
+                                    id: instrumentListItem
+                                    height: 13
+                                    Text {
+                                        text: name
+
+                                        MouseArea {
+                                            id: instrumentMouseArea
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                console.log("Instrument item clicked")
+                                                instrumentListItem.ListView.view.currentIndex = index;
+                                                instrumentListItem.forceActiveFocus();
+                                            }
+                                            onEntered: {
+                                                parent.color = "#0000ff"
+                                            }
+                                            onExited: {
+                                                parent.color = "#000000"
+                                            }
+                                        }
+                                    }
+                                }
                         }
                     }
                     ListModel {
