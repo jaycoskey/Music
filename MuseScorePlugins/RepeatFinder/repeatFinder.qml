@@ -276,7 +276,7 @@ MuseScore {
                         onClicked:
                         {
                             populateInstrumentList();
-                            instrumentList.height = 13 * curScore.parts.length;
+                            instrumentList.height = 18 * curScore.parts.length;
                             instrumentList.visible = true;
                             instrumentListSpacer.visible = false;
                         }
@@ -296,6 +296,9 @@ MuseScore {
                 RowLayout { 
                     id: instrumentList
                     visible: false
+                    ListModel {
+                        id: instrumentModel
+                    }
                     Rectangle {
                         anchors.fill: parent
                         anchors.leftMargin: 285
@@ -303,6 +306,8 @@ MuseScore {
                         ListView {
                             id: instrumentListView
                             anchors.fill: parent
+                            focus: true
+                            clip: true
                             model: instrumentModel
                             highlight: Rectangle {
                                 color:   "black"
@@ -313,35 +318,53 @@ MuseScore {
                             // currentIndex: instrumentList.current
                             preferredHighlightBegin: 80; preferredHighlightEnd: 220
                             highlightRangeMode: ListView.ApplyRange
-                            delegate:
+                            delegate: instrumentListDelegate
+                            Component {
+                                id: instrumentListDelegate
+
                                 Item {
                                     id: instrumentListItem
-                                    height: 13
-                                    Text {
-                                        text: name
+                                    height: 17
+                                    RowLayout {
+                                        id: instrumentRow
+                                        CheckBox {
+                                            id: instrumentCheckBox
+                                            checked: false
+                                            function instrumentCheckBoxClick() {
+                                                instrumentModel.set( index
+                                                                   , { "selected":
+                                                                         instrumentCheckBox.checked
+                                                                     }
+                                                                   )
+                                            }
+                                            onClicked: instrumentCheckBoxClick()
+                                        }
+                                        Text {
+                                            id: instrumentName
+                                            text: name
 
-                                        MouseArea {
-                                            id: instrumentMouseArea
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            onClicked: {
-                                                console.log("Instrument item clicked")
-                                                instrumentListItem.ListView.view.currentIndex = index;
-                                                instrumentListItem.forceActiveFocus();
-                                            }
-                                            onEntered: {
-                                                parent.color = "#0000ff"
-                                            }
-                                            onExited: {
-                                                parent.color = "#000000"
-                                            }
+//                                            MouseArea {
+//                                                id: instrumentMouseArea
+//                                                anchors.fill: parent
+//                                                hoverEnabled: true
+//                                                onClicked: {
+//                                                    console.log("Instrument item clicked")
+//                                                    instrumentListItem.ListView.view.currentIndex = index;
+//                                                    instrumentListItem.forceActiveFocus();
+//                                                    // parent.parent.instrumentRow.instrumentCheckBox.instrumentCheckBoxClick();
+//                                                }
+//                                                onEntered: {
+//                                                    instrumentName.color = "#0000ff"
+//                                                }
+//                                                onExited: {
+//                                                    instrumentName.color = "#000000"
+//                                                }
+//                                            }
                                         }
                                     }
                                 }
+                            }
                         }
-                    }
-                    ListModel {
-                        id: instrumentModel
                     }
                 } // RowLayout
             } // ColumnLayout
