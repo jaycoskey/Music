@@ -459,7 +459,100 @@ MuseScore {
               }
 
               // ===== Construct data structures (suffix tree(s)) =====
-              // TODO: Color notes based on repetitions found in suffix tree(s).
+              var keysig = parseInt(curScore.keysig);
+              console.log("keysig=" + keysig);
+              // for(var partNum = 0; partNum < curScore.parts.length; partNum++) {
+              // }
+
+              function CursorStats(startStaff, endStaff, endTick, fullScore) {
+                console.log("Entering CursorStats");
+                var obj = {
+                  startStaff : startStaff,
+                  endStaff   : endStaff,
+                  endTick    : endTick,
+                  fullScore  : fullScore
+                };
+                return obj;
+              }
+              // See MuseScore plugin: notenames.qml
+              function getCursorStats(cursor) {
+                console.log("Entering getCursorStats");
+                var startStaff;
+                var endStaff;
+                var endTick   = 0;
+                var fullScore = false;
+                if (cursor.segment) {
+                  startStaff = cursor.staffIdx;
+                  cursor.rewind(2);
+                  if (cursor.tick == 0) {
+                    endTick = curScore.lastSegment.tick + 1;
+                  } else {
+                    endTick = cursor.tick;
+                  }
+                  endStaff = cursor.staffIdx;
+                } else {
+                  startStaff = 0;
+                  endStaff  = curScore.nstaves - 1;
+                  fullScore = true;
+                } 
+                return CursorStats(startStaff, endStaff, endTick, fullScore);
+              }
+
+              var cursor = curScore.newCursor();
+              cursor.rewind(1); // beginning of selection
+              var cursorStats = getCursorStats(cursor)
+              var startStaff  = cursorStats.startStaff;
+              var endStaff    = cursorStats.endStaff;
+              var endTick     = cursorStats.endTick;
+              var fullScore   = cursorStats.fullScore;
+
+              for (var staff = startStaff; staff <= endStaff; staff++) {
+                console.log("Staff: " + staff);
+                for (var voiceNum = 0; voiceNum < 4; voiceNum++) {
+                  console.log("Voice #" + voiceNum);
+                  cursor.staffIdx = staff;
+                  cursor.voice    = voiceNum;
+                  if (fullScore) {
+                    cursor.rewind(0);
+                  }
+                  while (cursor.segment && (fullScore || cursor.tick < endTick)) {
+                    console.log("Iterating cursor...");
+                    if (cursor.element && cursor.element.type == Element.CHORD) {
+                      // var text = newElement(Element.STAFF_TEXT);
+                      var notes = cursor.element.notes;
+                      var noteCount = notes.length;
+                      console.log("staff,voice,tick,noteCount="
+                        + staff + "," + voiceNum + "," + cursor.tick + "," + noteCount + "\n");
+                    }
+                    cursor.next();
+                  }
+                }
+              }
+
+/*
+              for (var bar = curScore.firstMeasure; bar; bar = bar.nextMeasure) {
+                console.log("BAR:")
+                for (var seg = bar.firstSegment; seg; seg = seg.nextInMeasure) {
+                  console.log("  Segment: ")
+                  // var element = seg.elementAt(0)
+                  var elem  = seg               // Often Element.SEGMENT (73)
+                  var elem0 = seg.elementAt(0)  // BAR_LINE(6), CLEF(13), KEYSIG(14), TIMESIG(16), REST(17) 
+                  var elem1 = seg.elementAt(1)  // Always null?
+                  var elem2 = seg.elementAt(2)  // Always null?
+                  var elem3 = seg.elementAt(3)  // Always null?
+                  console.log("      Element: " + elem.getName() + " / " + elem.type)
+                  elem0 && console.log("      Element0: " + elem0.getName() + " / " + elem0.type)
+                  elem1 && console.log("      Element1: " + elem1.getName() + " / " + elem1.type)
+                  elem2 && console.log("      Element2: " + elem2.getName() + " / " + elem2.type)
+                  elem3 && console.log("      Element3: " + elem3.getName() + " / " + elem3.type)
+                  if (elem && elem.type == Element.CHORD) {
+                    console.log(qsTr("      element(chord)"))
+                  }
+                }
+              }
+*/
+              // Note: Suffix tree of: Part, Chord=[Pitch, Accidental], Duration
+              //       (w/ info on time=Bar/Tick)
 
               // ===== Find repeated phrases matching constraints =====
 
